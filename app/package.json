@@ -1,0 +1,27 @@
+{
+  "name": "discord-getting-started",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Discord example app",
+  "main": "src/appGcp.js",
+  "type": "module",
+  "engines": {
+    "node": ">=18.x"
+  },
+  "scripts": {
+    "start": "functions-framework --target=discordBot",
+    "register": "node src/commands.js",
+    "dev": "nodemon src/appLocal.js"
+  },
+  "author": "Shay DeWael",
+  "license": "MIT",
+  "dependencies": {
+    "@google-cloud/functions-framework": "^4.0.0",
+    "discord-interactions": "^4.0.0",
+    "dotenv": "^16.0.3",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  }
+}
