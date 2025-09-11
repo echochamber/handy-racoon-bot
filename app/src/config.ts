@@ -55,7 +55,7 @@ export const firebase: FirebaseConfig = {
   measurementId: FIREBASE_MEASUREMENT_ID!
 }
 
-const { PUBLIC_KEY, APPLICATION_ID, BOT_TOKEN, RUNTIME_ENV, PORT = "3000" } = process.env
+const { PUBLIC_KEY, APPLICATION_ID, BOT_TOKEN, RUNTIME_ENV, FIREBASE_DB = 'handy-racoon', PORT = "3000"} = process.env
 
 var errors: string[] = []
 if (!PUBLIC_KEY) {
@@ -70,7 +70,7 @@ if (!BOT_TOKEN) {
 if (errors.length) {
   throw new Error(`Missing environment variables ${errors.join(",")}`);
 }
-if (!PUBLIC_KEY || !APPLICATION_ID || !BOT_TOKEN || !PORT || !RUNTIME_ENV) {
+if (!PUBLIC_KEY || !APPLICATION_ID || !BOT_TOKEN || !PORT || !RUNTIME_ENV || !FIREBASE_DB) {
   throw new Error(`Missing environment variables ${errors.join(",")}`);
 }
 
@@ -79,8 +79,9 @@ export interface AppConfig {
  APPLICATION_ID: string,
  BOT_TOKEN: string,
  PORT: string,
- RUNTIME_ENV: string
+ RUNTIME_ENV: string,
+ FIREBASE_DB: string
 }
 export const config: AppConfig = {
-  PUBLIC_KEY, APPLICATION_ID, BOT_TOKEN, PORT, RUNTIME_ENV
+  PUBLIC_KEY, APPLICATION_ID, BOT_TOKEN, PORT, RUNTIME_ENV, FIREBASE_DB
 };

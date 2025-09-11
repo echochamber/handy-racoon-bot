@@ -30,3 +30,14 @@ export async function tryIt2(db: Firestore): Promise<WriteResult> {
     born: 1815
   });
 }
+
+export async function tryIt3(db: Firestore) {
+  const docRef = await db.collection('players').doc('example').get();
+
+  await db.collection('players').doc('example2').set(
+    { id: 'example_2', discorduser: 'discordUser123547', alias: 'Display Name Person' }
+  );
+  const result = { id: docRef.id, ...docRef.data() };
+  console.log(result);
+  return 
+}

@@ -8,9 +8,10 @@ import { Request, Response } from 'express';
 
 
 import { getRandomEmoji } from "../utils.js";
+import { APIInteraction, RESTPostAPIApplicationCommandsJSONBody } from "discord-api-types/v10";
 
 // Simple test command
-export const TEST_COMMAND = {
+export const TEST_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {
   name: 'test',
   description: 'Basic command',
   type: 1,
@@ -20,7 +21,7 @@ export const TEST_COMMAND = {
 
 
 
-export function handleTest(req: Request, res: Response) {
+export function handleTest(interaction: APIInteraction, res: Response) {
   return res.send({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {

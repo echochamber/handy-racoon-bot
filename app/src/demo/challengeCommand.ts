@@ -1,4 +1,4 @@
-import { getShuffledOptions, getResult, ActiveGame, getRPSChoices } from "../game.js";
+import { getShuffledOptions, getResult, ActiveGame, getRPSChoices, rpsChoice } from "../game.js";
 import {
   ButtonStyleTypes,
   InteractionResponseFlags,
@@ -10,6 +10,7 @@ import { Request, Response } from 'express';
 
 import { getRandomEmoji, DiscordRequest, capitalize } from "../utils.js";
 import { config } from "../config.js";
+import { APIChatInputApplicationCommandInteraction, APIInteraction, APIMessageComponentInteraction, APIMessageComponentSelectMenuInteraction, RESTPostAPIApplicationCommandsJSONBody } from "discord-api-types/v10";
 
 
 const activeGames: { [key: string]: ActiveGame } = {};
@@ -29,7 +30,7 @@ function createCommandChoices() {
   return commandChoices;
 }
 
-export const CHALLENGE_COMMAND = {
+export const CHALLENGE_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {
   name: 'challenge',
   description: 'Challenge to a match of rock paper scissors',
   options: [
@@ -46,17 +47,17 @@ export const CHALLENGE_COMMAND = {
   contexts: [0, 2],
 };
 
-export function handleInitiateChallenge(req: Request, res: Response) {
-  const { id } = req.body;
-  // Interaction context
-  const context = req.body.context;
-  // User ID is in user field for (G)DMs, and member for servers
-  const userId = context === 0 ? req.body.member.user.id : req.body.user.id;
-  // User's object choice
-  const objectName = req.body.data.options[0].value;
+export function handleInitiateChallenge(req: Request , res: Response) {
+  const interaction = req.body as APIInteraction;
+  const comp = interaction as APIChatInputApplicationCommandInteraction;
+  const userId = (interaction.member?.user?.id ?? interaction.user?.id) as string;
+  if (!comp.data || !comp.data.options || !comp.data.options[0]) {
+    throw new Error(`Interaction missing data ${JSON.stringify(comp.data)}`);
+  }
+  const objectName = (comp.data.options[0] as { value: string }).value as keyof rpsChoice;
 
   // Create active game using message ID as the game ID
-  activeGames[id] = {
+  activeGames[interaction.id] = {
     id: userId,
     objectName,
   };
@@ -89,10 +90,15 @@ export function handleInitiateChallenge(req: Request, res: Response) {
 }
 
 export async function handleAcceptChallege(req: Request, res: Response, componentId: string) {
+  const interaction = req.body as APIInteraction;
+  if (!interaction.message) {
+    throw new Error("No message in interaction");
+  }
+  
   // get the associated game ID
   const gameId = componentId.replace("accept_button_", "");
   // Delete message with token in request body
-  const endpoint = `webhooks/${config.APPLICATION_ID}/${req.body.token}/messages/${req.body.message.id}`;
+  const endpoint = `webhooks/${config.APPLICATION_ID}/${interaction.token}/messages/${interaction.message.id}`;
   try {
     const bdy = {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -131,57 +137,57 @@ export async function handleAcceptChallege(req: Request, res: Response, componen
 }
 
 export async function handleSelectChoice(req: Request, res: Response, componentId: string) {
-  const { data } = req.body;
-
+  const interaction = req.body as APIInteraction;
   // get the associated game ID
   const gameId = componentId.replace("select_choice_", "");
+  const comp = interaction as APIMessageComponentSelectMenuInteraction; 
 
-  if (activeGames[gameId]) {
-    // Interaction context
-    const context = req.body.context;
-    // Get user ID and object choice for responding user
-    // User ID is in user field for (G)DMs, and member for servers
-    const userId = context === 0 ? req.body.member.user.id : req.body.user.id;
-    const objectName = data.values[0];
-    // Calculate result from helper function
-    const resultStr = getResult(activeGames[gameId], {
-      id: userId,
-      objectName,
+  if (!activeGames[gameId]) {
+    return;
+  }
+
+  // Get user ID and object choice for responding user
+  // User ID is in user field for (G)DMs, and member for servers
+  const userId = (interaction.member?.user?.id ?? interaction.user?.id) as string;
+  const objectName = (comp.data as any).values[0];
+  // Calculate result from helper function
+  const resultStr = getResult(activeGames[gameId], {
+    id: userId,
+    objectName,
+  });
+
+  // Remove game from storage
+  delete activeGames[gameId];
+  // Update message with token in request body
+  const endpoint = `webhooks/${config.APPLICATION_ID}/${interaction.token}/messages/${interaction.message?.id}`;
+
+  try {
+    // Send results
+    await res.send({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        flags: InteractionResponseFlags.IS_COMPONENTS_V2,
+        components: [
+          {
+            type: MessageComponentTypes.TEXT_DISPLAY,
+            content: resultStr,
+          },
+        ],
+      },
     });
-
-    // Remove game from storage
-    delete activeGames[gameId];
-    // Update message with token in request body
-    const endpoint = `webhooks/${config.APPLICATION_ID}/${req.body.token}/messages/${req.body.message.id}`;
-
-    try {
-      // Send results
-      await res.send({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          flags: InteractionResponseFlags.IS_COMPONENTS_V2,
-          components: [
-            {
-              type: MessageComponentTypes.TEXT_DISPLAY,
-              content: resultStr,
-            },
-          ],
-        },
-      });
-      // Update ephemeral message
-      await DiscordRequest(endpoint, {
-        method: "PATCH",
-        body: {
-          components: [
-            {
-              type: MessageComponentTypes.TEXT_DISPLAY,
-              content: "Nice choice " + getRandomEmoji(),
-            },
-          ],
-        },
-      });
-    } catch (err) {
-      console.error("Error sending message:", err);
-    }
+    // Update ephemeral message
+    await DiscordRequest(endpoint, {
+      method: "PATCH",
+      body: {
+        components: [
+          {
+            type: MessageComponentTypes.TEXT_DISPLAY,
+            content: "Nice choice " + getRandomEmoji(),
+          },
+        ],
+      },
+    });
+  } catch (err) {
+    console.error("Error sending message:", err);
   }
 }
