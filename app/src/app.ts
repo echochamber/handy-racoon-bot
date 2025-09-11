@@ -2,11 +2,12 @@ import {
   InteractionType,
   verifyKeyMiddleware
 } from 'discord-interactions';
-import 'dotenv/config';
 import express from 'express';
 import { handleAcceptChallege, handleInitiateChallenge, handleSelectChoice } from './demo/rpsCommand.js';
-import { handleTest } from './demo/testCommand.js';
+// import { handleTest } from '@/demo/testCommand.js';
 import { getRandomEmoji } from './utils.js';
+import { config } from './config.js'
+import { handleTest } from './demo/testCommand.js';
 
 // Create an express app
 const app = express();
@@ -20,7 +21,7 @@ app.get('/', async function (req, res) {
  * Interactions endpoint URL where Discord will send HTTP requests
  * Parse request body and verifies incoming requests using discord-interactions package
  */
-app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async function (req, res) {
+app.post('/interactions', verifyKeyMiddleware(config.PUBLIC_KEY), async function (req, res) {
   console.log("Request received");
   // Interaction id, type and data
   const { id, type, data } = req.body;

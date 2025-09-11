@@ -1,4 +1,4 @@
-import { getShuffledOptions, getResult } from "../game.js";
+import { getShuffledOptions, getResult, ActiveGame } from "../game.js";
 import {
   ButtonStyleTypes,
   InteractionResponseFlags,
@@ -6,12 +6,15 @@ import {
   MessageComponentTypes,
 } from "discord-interactions";
 
+import { Request, Response } from 'express';
+
 import { getRandomEmoji, DiscordRequest } from "../utils.js";
+import { config } from "../config.js";
 
-// To keep track of our active games
-const activeGames = {};
 
-export function handleInitiateChallenge(req, res) {
+const activeGames: { [key: string]: ActiveGame } = {};
+
+export function handleInitiateChallenge(req: Request, res: Response) {
   const { id } = req.body;
   // Interaction context
   const context = req.body.context;
@@ -53,13 +56,13 @@ export function handleInitiateChallenge(req, res) {
   });
 }
 
-export async function handleAcceptChallege(req, res, componentId) {
+export async function handleAcceptChallege(req: Request, res: Response, componentId: string) {
   // get the associated game ID
   const gameId = componentId.replace("accept_button_", "");
   // Delete message with token in request body
-  const endpoint = `webhooks/${process.env.APP_ID}/${req.body.token}/messages/${req.body.message.id}`;
+  const endpoint = `webhooks/${config.APPLICATION_ID}/${req.body.token}/messages/${req.body.message.id}`;
   try {
-    await res.send({
+    const bdy = {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
         // Indicates it'll be an ephemeral message
@@ -84,7 +87,10 @@ export async function handleAcceptChallege(req, res, componentId) {
           },
         ],
       },
-    });
+    };
+    console.log(`Body will be`)
+    console.log(bdy)
+    res.send(bdy);
     // Delete previous message
     await DiscordRequest(endpoint, { method: "DELETE" });
   } catch (err) {
@@ -92,7 +98,7 @@ export async function handleAcceptChallege(req, res, componentId) {
   }
 }
 
-export async function handleSelectChoice(req, res, componentId) {
+export async function handleSelectChoice(req: Request, res: Response, componentId: string) {
   const { data } = req.body;
 
   // get the associated game ID
@@ -114,7 +120,7 @@ export async function handleSelectChoice(req, res, componentId) {
     // Remove game from storage
     delete activeGames[gameId];
     // Update message with token in request body
-    const endpoint = `webhooks/${process.env.APP_ID}/${req.body.token}/messages/${req.body.message.id}`;
+    const endpoint = `webhooks/${config.APPLICATION_ID}/${req.body.token}/messages/${req.body.message.id}`;
 
     try {
       // Send results

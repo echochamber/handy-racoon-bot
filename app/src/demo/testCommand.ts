@@ -4,9 +4,12 @@ import {
   MessageComponentTypes,
 } from "discord-interactions";
 
+import { Request, Response } from 'express';
+
+
 import { getRandomEmoji } from "../utils.js";
 
-export function handleTest(req, res) {
+export function handleTest(req: Request, res: Response) {
   return res.send({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {

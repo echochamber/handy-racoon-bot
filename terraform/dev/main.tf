@@ -1,4 +1,4 @@
-terraform {
+terraform { 
   required_providers {
     google = {
       source  = "hashicorp/google"
@@ -13,28 +13,25 @@ provider "google" {
 }
 
 
-
 resource "google_storage_bucket" "functions" {
-  name                        = "${var.project_id}-functions-source"
+  name                        = "${var.project_id}-${var.env_name}-functions-source"
   location                    = var.region
   uniform_bucket_level_access = true
 }
 
+
 module "discord_bot" {
-  source      = "./modules/cloud_function"
+  source      = "../modules/handy_racoon"
+  function_source_dir = "../../app"
   project_id  = var.project_id
   region      = var.region
-  name        = "discordbot"
-  description = "Handles discord bot interactions."
-  runtime     = "nodejs22"
-  entry_point = "discordBot"
-  source_dir  = "../app/"
-  make_public = true
+  environment_type = "${var.env_name}"
   bucket_name = google_storage_bucket.functions.name
 }
 
 output "all_functions" {
   value = {
+    title = "discordbot-${var.env_name}"
     discordbot = module.discord_bot.function_url
   }
 }

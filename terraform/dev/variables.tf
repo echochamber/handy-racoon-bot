@@ -9,3 +9,9 @@ variable "region" {
   type        = string
   description = "Google Cloud Region"
 }
+
+variable "env_name" {
+  default     = "dev"
+  type        = string
+  description = "Env Name"
+}

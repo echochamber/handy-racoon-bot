@@ -1,41 +1,24 @@
 import { capitalize } from './utils.js';
 
-export function getResult(p1, p2) {
-  let gameResult;
-  if (RPSChoices[p1.objectName] && RPSChoices[p1.objectName][p2.objectName]) {
-    // o1 wins
-    gameResult = {
-      win: p1,
-      lose: p2,
-      verb: RPSChoices[p1.objectName][p2.objectName],
-    };
-  } else if (
-    RPSChoices[p2.objectName] &&
-    RPSChoices[p2.objectName][p1.objectName]
-  ) {
-    // o2 wins
-    gameResult = {
-      win: p2,
-      lose: p1,
-      verb: RPSChoices[p2.objectName][p1.objectName],
-    };
-  } else {
-    // tie -- win/lose don't
-    gameResult = { win: p1, lose: p2, verb: 'tie' };
-  }
-
-  return formatResult(gameResult);
-}
-
-function formatResult(result) {
-  const { win, lose, verb } = result;
-  return verb === 'tie'
-    ? `<@${win.id}> and <@${lose.id}> draw with **${win.objectName}**`
-    : `<@${win.id}>'s **${win.objectName}** ${verb} <@${lose.id}>'s **${lose.objectName}**`;
-}
-
 // this is just to figure out winner + verb
-const RPSChoices = {
+export type rpsChoice = {
+    description: string;
+    virus?: string;
+    computer?: string;
+    scissors?: string;
+    wumpus?: string;
+    rock?: string;
+    paper?: string;
+    cowboy?: string;
+};
+
+// To keep track of our active games
+export type ActiveGame = {
+  id: string;
+  objectName: keyof rpsChoice;
+};
+
+const rpsChoices: Record<string, rpsChoice> = {
   rock: {
     description: 'sedimentary, igneous, or perhaps even metamorphic',
     virus: 'outwaits',
@@ -80,8 +63,44 @@ const RPSChoices = {
   },
 };
 
-export function getRPSChoices() {
-  return Object.keys(RPSChoices);
+
+
+export function getResult(p1: ActiveGame, p2: ActiveGame) {
+  let gameResult;
+  if (rpsChoices[p1.objectName] && rpsChoices[p1.objectName][p2.objectName]) {
+    // o1 wins
+    gameResult = {
+      win: p1,
+      lose: p2,
+      verb: rpsChoices[p1.objectName][p2.objectName],
+    };
+  } else if (
+    rpsChoices[p2.objectName] &&
+    rpsChoices[p2.objectName][p1.objectName]
+  ) {
+    // o2 wins
+    gameResult = {
+      win: p2,
+      lose: p1,
+      verb: rpsChoices[p2.objectName][p1.objectName],
+    };
+  } else {
+    // tie -- win/lose don't
+    gameResult = { win: p1, lose: p2, verb: 'tie' };
+  }
+
+  return formatResult(gameResult);
+}
+
+function formatResult(result: { win: any; lose: any; verb: any; }) {
+  const { win, lose, verb } = result;
+  return verb === 'tie'
+    ? `<@${win.id}> and <@${lose.id}> draw with **${win.objectName}**`
+    : `<@${win.id}>'s **${win.objectName}** ${verb} <@${lose.id}>'s **${lose.objectName}**`;
+}
+
+export function getRPSChoices(): (keyof rpsChoice)[] {
+  return Object.keys(rpsChoices) as (keyof rpsChoice)[];
 }
 
 // Function to fetch shuffled options for select menu
@@ -95,7 +114,7 @@ export function getShuffledOptions() {
     options.push({
       label: capitalize(c),
       value: c.toLowerCase(),
-      description: RPSChoices[c]['description'],
+      description: rpsChoices[c]['description'],
     });
   }
 
