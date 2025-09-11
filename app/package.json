@@ -13,8 +13,8 @@
     "register": "tsx src/commands.ts",
     "dev": "tsx watch src/appLocal.ts",
     "build": "tsc",
-    "prestart": "yarn run build",
-    "gcp-build": "yarn run build",
+    "prestart": "yarn run build && tsc-alias",
+    "gcp-build": "yarn run build && tsc-alias",
     "test": "mocha"
   },
   "author": "Jason Schein",
@@ -24,7 +24,9 @@
     "discord-interactions": "^4.0.0",
     "dotenv": "^16.0.3",
     "express": "^5.1.0",
-    "nodemon": "^3.1.10"
+    "firebase-admin": "^13.5.0",
+    "nodemon": "^3.1.10",
+    "tsc-alias": "^1.8.16"
   },
   "devDependencies": {
     "@types/chai": "^5.2.2",
@@ -42,7 +44,8 @@
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
-    "wait-port": "^1.1.0"
+    "wait-port": "^1.1.0",
+    "tsc-alias": "^1.8.16"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

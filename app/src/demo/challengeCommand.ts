@@ -1,4 +1,4 @@
-import { getShuffledOptions, getResult, ActiveGame } from "../game.js";
+import { getShuffledOptions, getResult, ActiveGame, getRPSChoices } from "../game.js";
 import {
   ButtonStyleTypes,
   InteractionResponseFlags,
@@ -8,11 +8,43 @@ import {
 
 import { Request, Response } from 'express';
 
-import { getRandomEmoji, DiscordRequest } from "../utils.js";
+import { getRandomEmoji, DiscordRequest, capitalize } from "../utils.js";
 import { config } from "../config.js";
 
 
 const activeGames: { [key: string]: ActiveGame } = {};
+
+// Get the game choices from game.js
+function createCommandChoices() {
+  const choices = getRPSChoices();
+  const commandChoices = [];
+
+  for (let choice of choices) {
+    commandChoices.push({
+      name: capitalize(choice),
+      value: choice.toLowerCase(),
+    });
+  }
+
+  return commandChoices;
+}
+
+export const CHALLENGE_COMMAND = {
+  name: 'challenge',
+  description: 'Challenge to a match of rock paper scissors',
+  options: [
+    {
+      type: 3,
+      name: 'object',
+      description: 'Pick your object',
+      required: true,
+      choices: createCommandChoices(),
+    },
+  ],
+  type: 1,
+  integration_types: [0, 1],
+  contexts: [0, 2],
+};
 
 export function handleInitiateChallenge(req: Request, res: Response) {
   const { id } = req.body;

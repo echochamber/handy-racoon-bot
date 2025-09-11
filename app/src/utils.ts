@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
 
-type CommandTemp = {
+interface CommandTemp {
   name: string;
   description: string;
   type: number;

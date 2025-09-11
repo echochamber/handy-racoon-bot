@@ -9,6 +9,17 @@ import { Request, Response } from 'express';
 
 import { getRandomEmoji } from "../utils.js";
 
+// Simple test command
+export const TEST_COMMAND = {
+  name: 'test',
+  description: 'Basic command',
+  type: 1,
+  integration_types: [0, 1],
+  contexts: [0, 1, 2],
+};
+
+
+
 export function handleTest(req: Request, res: Response) {
   return res.send({
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,

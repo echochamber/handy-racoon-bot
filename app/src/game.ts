@@ -13,7 +13,7 @@ export type rpsChoice = {
 };
 
 // To keep track of our active games
-export type ActiveGame = {
+export interface ActiveGame {
   id: string;
   objectName: keyof rpsChoice;
 };

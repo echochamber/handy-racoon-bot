@@ -3,11 +3,12 @@ import {
   verifyKeyMiddleware
 } from 'discord-interactions';
 import express from 'express';
-import { handleAcceptChallege, handleInitiateChallenge, handleSelectChoice } from './demo/rpsCommand.js';
-// import { handleTest } from '@/demo/testCommand.js';
+import { handleAcceptChallege, handleInitiateChallenge, handleSelectChoice } from './demo/challengeCommand.js';
 import { getRandomEmoji } from './utils.js';
-import { config } from './config.js'
+import { config, constants } from './config.js'
 import { handleTest } from './demo/testCommand.js';
+import { tryIt, tryIt2 } from './storage/fbScrappy.js';
+import { db } from './storage/firebase.js';
 
 // Create an express app
 const app = express();
@@ -16,6 +17,19 @@ app.get('/', async function (req, res) {
   console.log("Root Req Received");
   return res.send({content: `hello world ${getRandomEmoji()}`});
 });
+
+app.get('/local', async function (req, res) {
+  const [res1, res2] = await tryIt(db);
+  console.log(`Results are (${res1.writeTime}, ${res2.writeTime})`);
+  return res.send({content: `hello world ${getRandomEmoji()}`});
+});
+
+app.get('/local2', async function (req, res) {
+  const res1 = await tryIt2(db);
+  console.log(`Results are (${res1.writeTime}`);
+  return res.send({content: `hello world ${getRandomEmoji()}`});
+});
+
 
 /**
  * Interactions endpoint URL where Discord will send HTTP requests
