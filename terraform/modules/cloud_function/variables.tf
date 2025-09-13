@@ -41,6 +41,11 @@ variable "source_dir" {
   type        = string
   description = "Path to the function's source directory"
 }
+variable "source_excludes" {
+  type        = list(string)
+  default     = ["dist/*"]
+  description = "Pattern of files in source dir to exclude"
+}
 
 variable "memory" {
   type        = string

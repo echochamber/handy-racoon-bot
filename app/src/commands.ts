@@ -1,14 +1,20 @@
-import { DiscordRequest } from './utils.js';
 import { CHALLENGE_COMMAND } from './demo/challengeCommand.js';
 import { TEST_COMMAND } from './demo/testCommand.js';
-import {ADD_CHARACTER_COMMAND } from './commands/addCharacter.js';
+import { addCharacter } from './commands/addCharacter.js';
 import { config } from './config.js';
 import { RESTPostAPIApplicationCommandsJSONBody } from 'discord-api-types/v10';
+import { listCharacter } from './commands/listCharacters.js';
+import { DiscordRequest } from './util/discordAPI.js';
+import { addItem } from './commands/addItem.js';
+import { attuneItem } from './commands/attuneItem.js';
+import { listAttunements } from './commands/listAttunements.js';
 
-console.log(ADD_CHARACTER_COMMAND, CHALLENGE_COMMAND, TEST_COMMAND);
-const ALL_COMMANDS = [TEST_COMMAND, CHALLENGE_COMMAND, ADD_CHARACTER_COMMAND];
+const ALL_COMMANDS = [
+  TEST_COMMAND, CHALLENGE_COMMAND, addCharacter.command, listCharacter.command,
+  addItem.command, attuneItem.command, listAttunements.command];
+console.log(ALL_COMMANDS);
 
-export async function InstallGlobalCommands(appId: string | undefined, commands: RESTPostAPIApplicationCommandsJSONBody[]) {
+export async function InstallGlobalCommands(appId: string, commands: RESTPostAPIApplicationCommandsJSONBody[]) {
   // API endpoint to overwrite global commands
   const endpoint = `applications/${appId}/commands`;
 
@@ -20,4 +26,4 @@ export async function InstallGlobalCommands(appId: string | undefined, commands:
   }
 }
 
-InstallGlobalCommands(config.APPLICATION_ID, ALL_COMMANDS);
+InstallGlobalCommands(config.applicationId, ALL_COMMANDS);

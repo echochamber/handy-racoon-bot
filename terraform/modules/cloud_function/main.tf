@@ -42,6 +42,7 @@ data "archive_file" "function" {
   type        = "zip"
   output_path = "/tmp/${var.name}-source.zip"
   source_dir  = var.source_dir
+  excludes    = var.source_excludes
 }
 
 resource "google_storage_bucket_object" "function" {

@@ -3,6 +3,11 @@ variable "function_source_dir" {
   type        = string
   description = "Directory of function source"
 }
+variable "function_source_excludes" {
+  type        = list(string)
+  default     = ["dist/*"]
+  description = "Pattern of files in source dir to exclude"
+}
 
 variable "project_id" {
   type        = string

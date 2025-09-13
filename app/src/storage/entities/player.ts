@@ -1,4 +1,4 @@
-import { DocumentReference, Firestore } from "firebase-admin/firestore";
+import { DocumentReference, FieldValue, Firestore } from "firebase-admin/firestore";
 
 import { Character } from "./character.js"
 
@@ -13,7 +13,7 @@ export async function findByDiscordId(db: Firestore, discordId: string): Promise
   const playerRef: FirebaseFirestore.DocumentSnapshot = await db.collection('players').doc(discordId).get()
   // .doc(discordId).get()
   const data = playerRef.data();
-  if (!data){
+  if (!data) {
     return;
   }
   return {
@@ -40,17 +40,8 @@ export async function findOrCreate(db: Firestore, discordId: string, discordName
   return newPlayer;
 }
 
-export async function addCharacter(db: Firestore, discordId: string, character: Character): Promise<Character> {
-  console.log(`Discord id is ${discordId}`)
-  const existingPlayer = await findOrCreate(db, discordId, "Auto");
-  existingPlayer.characters.push(character);
-  await db.collection('players').doc(discordId).update({ characters: existingPlayer.characters });
-
-  return character;
-}
-
 export const playerDao = {
   findByDiscordId,
-  findOrCreate,
-  addCharacter
+  findOrCreate
 }
+

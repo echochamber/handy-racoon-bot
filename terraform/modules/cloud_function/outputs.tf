@@ -5,3 +5,7 @@ output "function_url" {
 output "function_name" {
   value = google_cloudfunctions2_function.function.name
 }
+
+output "archive_hash" {
+  value = filemd5(data.archive_file.function.output_path)
+}

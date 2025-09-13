@@ -1,4 +1,4 @@
-import { getShuffledOptions, getResult, ActiveGame, getRPSChoices, rpsChoice } from "../game.js";
+import { getShuffledOptions, getResult, ActiveGame, getRPSChoices, rpsChoice } from "../demo/game.js";
 import {
   ButtonStyleTypes,
   InteractionResponseFlags,
@@ -8,9 +8,10 @@ import {
 
 import { Request, Response } from 'express';
 
-import { getRandomEmoji, DiscordRequest, capitalize } from "../utils.js";
 import { config } from "../config.js";
 import { APIChatInputApplicationCommandInteraction, APIInteraction, APIMessageComponentInteraction, APIMessageComponentSelectMenuInteraction, RESTPostAPIApplicationCommandsJSONBody } from "discord-api-types/v10";
+import { capitalize, getRandomEmoji } from "@/util/misc.js";
+import { DiscordRequest } from "@/util/discordAPI.js";
 
 
 const activeGames: { [key: string]: ActiveGame } = {};
@@ -98,7 +99,7 @@ export async function handleAcceptChallege(req: Request, res: Response, componen
   // get the associated game ID
   const gameId = componentId.replace("accept_button_", "");
   // Delete message with token in request body
-  const endpoint = `webhooks/${config.APPLICATION_ID}/${interaction.token}/messages/${interaction.message.id}`;
+  const endpoint = `webhooks/${config.applicationId}/${interaction.token}/messages/${interaction.message.id}`;
   try {
     const bdy = {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -159,7 +160,7 @@ export async function handleSelectChoice(req: Request, res: Response, componentI
   // Remove game from storage
   delete activeGames[gameId];
   // Update message with token in request body
-  const endpoint = `webhooks/${config.APPLICATION_ID}/${interaction.token}/messages/${interaction.message?.id}`;
+  const endpoint = `webhooks/${config.applicationId}/${interaction.token}/messages/${interaction.message?.id}`;
 
   try {
     // Send results

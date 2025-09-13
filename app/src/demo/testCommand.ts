@@ -1,14 +1,12 @@
 import {
   InteractionResponseFlags,
-  InteractionResponseType,
-  MessageComponentTypes,
 } from "discord-interactions";
 
 import { Request, Response } from 'express';
 
 
-import { getRandomEmoji } from "../utils.js";
-import { APIInteraction, RESTPostAPIApplicationCommandsJSONBody } from "discord-api-types/v10";
+import { ComponentType, InteractionResponseType, RESTPostAPIApplicationCommandsJSONBody } from "discord-api-types/v10";
+import { getRandomEmoji } from "../util/misc.js";
 
 // Simple test command
 export const TEST_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {
@@ -21,14 +19,14 @@ export const TEST_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {
 
 
 
-export function handleTest(interaction: APIInteraction, res: Response) {
+export function handleTest(req: Request, res: Response) {
   return res.send({
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    type: InteractionResponseType.ChannelMessageWithSource,
     data: {
       flags: InteractionResponseFlags.IS_COMPONENTS_V2,
       components: [
         {
-          type: MessageComponentTypes.TEXT_DISPLAY,
+          type: ComponentType.TextDisplay,
           // Fetches a random emoji to send from a helper function
           content: `hello world ${getRandomEmoji()}`,
         },

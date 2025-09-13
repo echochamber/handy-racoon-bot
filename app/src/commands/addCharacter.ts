@@ -1,17 +1,19 @@
 import { Request, Response } from 'express';
 import { APIInteraction, APIModalSubmitInteraction, ApplicationCommandType, ApplicationIntegrationType, ComponentType, InteractionContextType, InteractionResponseType, RESTPostAPIApplicationCommandsJSONBody, SelectMenuDefaultValueType, TextInputStyle } from 'discord-api-types/v10';
-import { playerDao } from '@/storage/entities/player.js';
 import { db } from '@/storage/firebase.js';
-import { Character } from '@/storage/entities/character.js';
-import { lookupUser } from '@/utils.js';
+import { Character, characterDao } from '@/storage/entities/character.js';
+import { InteractionResponseFlags } from 'discord-interactions';
+import { lookupUser } from '@/util/discordAPI.js';
 
-export const ADD_CHARACTER_COMMAND: RESTPostAPIApplicationCommandsJSONBody  = {
+export const ADD_CHARACTER_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {
   name: 'add_character',
   description: 'Add a RPG character to the app',
   type: ApplicationCommandType.ChatInput,
   contexts: [InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel],
   integration_types: [ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall]
 }
+
+export const SUBMIT_CUSTOM_ID = 'add_character';
 
 
 
@@ -20,7 +22,7 @@ export function handleInitiate(req: Request, res: Response) {
   const invokerId =
     (interaction.member?.user?.id ?? interaction.user?.id) as string;
 
-  return res.send({
+  res.send({
     type: InteractionResponseType.Modal,
     data: {
       custom_id: 'add_character',
@@ -68,36 +70,44 @@ export async function handleModalSubmission(req: Request, res: Response) {
   const interaction = req.body as APIModalSubmitInteraction;
 
   const fields = (interaction.data.components ?? [])
-      .map((c: any) => ('component' in c ? c.component : c));
+    .map((c: any) => ('component' in c ? c.component : c));
 
-  const userComp = fields.find((c: any) => c.custom_id === 'player' && c.type === ComponentType.UserSelect);
-  const nameComp = fields.find((c: any) => c.custom_id === 'character_name' && c.type === ComponentType.TextInput);
-  const descComp = fields.find((c: any) => c.custom_id === 'character_description' && c.type === ComponentType.TextInput);
+  const userId = fields.find((c: any) => c.custom_id === 'player' && c.type === ComponentType.UserSelect)?.values?.[0];
+  const characterName = fields.find((c: any) =>
+    c.custom_id === 'character_name'
+    && c.type === ComponentType.TextInput)?.value?.trim();
+  const characterDesc = fields.find((c: any) =>
+    c.custom_id === 'character_description'
+    && c.type === ComponentType.TextInput)?.value?.trim();
 
-  const userId = userComp?.values?.[0];
-  const characterName = nameComp?.value?.trim();
-  const characterDesc = descComp?.value?.trim();
-  const userResult = lookupUser(userId);
-  userResult.then(async d => {
-    const data = await d.json();
-    // user.global_name
-    // user.username
-    console.log(`Hello ${JSON.stringify(data)}`)
-  })
-  console.log(`Useful ${userId} ${characterName} ${characterDesc}`);
   var character: Character = {
     name: String(characterName),
     description: characterDesc,
     attunedItemIds: []
   }
-  playerDao.addCharacter(db, userId, character);
+  characterDao.create(db, userId, character, true)
+    .then(i => modalResponseMessage(res, `Character ${characterName} created.`))
+    .catch(i => {
+      modalResponseMessage(res, `Failed to create ${characterName}.`)
+      throw i;
+    });
+}
+
+export function processUser(userId: Number) {
+  const userResult = lookupUser(userId);
+  userResult.then(async d => {
+    const data = await d.json();
+    console.log(`Hello ${JSON.stringify(data)}`)
+  })
 }
 
 export const addCharacter = {
-  handleInitiate,
-  handleModalSubmission,
-  nameHandleMap: {
-    "add_character": handleInitiate,
-    "add_character_submit": handleModalSubmission,
-  }
+  command: ADD_CHARACTER_COMMAND,
+  submit_id: SUBMIT_CUSTOM_ID,
+  initiate: handleInitiate,
+  submit: handleModalSubmission,
+}
+
+function modalResponseMessage(res: Response<any, Record<string, any>>, arg1: string): any {
+  throw new Error('Function not implemented.');
 }

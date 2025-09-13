@@ -15,3 +15,9 @@ variable "env_name" {
   type        = string
   description = "Env Name"
 }
+
+variable "gcp_function_service_account" {
+  default = "522481805810-compute"
+  type = string
+  description =  "Service account that runs the gcp cloud function."
+}

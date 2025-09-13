@@ -3,13 +3,14 @@
   "private": true,
   "version": "0.0.1",
   "description": "Handy Racoon Bot",
-  "main": "dist/appGcp.js",
+  "main": "dist/src/appGcp.js",
   "type": "module",
   "engines": {
     "node": ">=18.x"
   },
   "scripts": {
     "start": "functions-framework --target=TypescriptFunction",
+    "ffstart": "yarn run build && tsc-alias && functions-framework --target=discordBot --source=dist/src/appGcp.js",
     "register": "tsx src/commands.ts",
     "dev": "tsx watch src/appLocal.ts",
     "build": "tsc",

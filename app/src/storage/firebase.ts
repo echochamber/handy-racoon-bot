@@ -1,12 +1,15 @@
-import { firebase, config } from "../config.js";
-
-import { initializeApp } from 'firebase-admin/app';
+// src/firebase.ts
+import { initializeApp, applicationDefault } from "firebase-admin/app";
 import { getFirestore, Firestore } from "firebase-admin/firestore";
+import { config} from "../config.js";
 
+export const fbApp = initializeApp(
+    {
+      projectId: config.gcpProject,
+      credential: applicationDefault(),
+    },
+    config.firebaseApp
+  );
 
-export function init() {
-  const fbApp = initializeApp(firebase);
-  return fbApp;
-}
-
-export const db: Firestore = getFirestore(init(), config.FIREBASE_DB);
+export const db: Firestore = getFirestore(fbApp, config.firebaseDb);
+db.settings({ ignoreUndefinedProperties: true });
