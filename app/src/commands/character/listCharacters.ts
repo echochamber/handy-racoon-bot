@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import {ApplicationCommandType, ApplicationIntegrationType, ComponentType, InteractionContextType, InteractionResponseType, RESTPostAPIApplicationCommandsJSONBody} from 'discord-api-types/v10';
 import { db } from '@/storage/firebase.js';
-import { characterDao } from '@/storage/entities/character.js';
+import { Character, characterDao, STASH_CHARACTER } from '@/storage/entities/character.js';
 import { InteractionResponseFlags } from 'discord-interactions';
 
 export const LIST_ALL_CHARACTERS_COMMAND: RESTPostAPIApplicationCommandsJSONBody  = {
@@ -12,31 +12,30 @@ export const LIST_ALL_CHARACTERS_COMMAND: RESTPostAPIApplicationCommandsJSONBody
   integration_types: [ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall]
 }
 
-export async function handleListAllCharacters(req: Request, res: Response) {
-  const characters: string[] = await characterDao.all(db).then(characters => {
-    if (!characters) {
-      return [];
-    }
-    return characters.map(c => {
-      return c.name
-    })
-  })
+
+
+export async function initiate(req: Request, res: Response) {
+  const characters: Character[] = await characterDao.all(db);
   return res.send({
     type: InteractionResponseType.ChannelMessageWithSource,
     data: {
-      flags: InteractionResponseFlags.IS_COMPONENTS_V2,
-      components: [
-        {
-          type: ComponentType.TextDisplay,
-          // Fetches a random emoji to send from a helper function
-          content: `${characters.join('\n')}`,
-        },
-      ],
+      components: characters
+      .filter(c => c.name !== STASH_CHARACTER.name)
+        .map((character) => ({
+        type: ComponentType.Container,
+        accent_color: 0x5865F2, // Discord blurple as a nice accent color
+        components: [
+          {
+            type: ComponentType.TextDisplay,
+            content: `# ${character.name}\n > ${character.description}`,
+          },
+        ],
+      })),
     },
   });
 }
 
 export const listCharacter = {
   command: LIST_ALL_CHARACTERS_COMMAND,
-  list: handleListAllCharacters,
+  initiate: initiate,
 }

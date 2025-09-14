@@ -32,18 +32,3 @@ export async function DiscordRequest(endpoint: string, options: any) {
   // return original response
   return res;
 }
-
-export function modalSuccessMessage(res: Response, message: string) {
-  res.send({
-    type: InteractionResponseType.ChannelMessageWithSource,
-    data: {
-      flags: InteractionResponseFlags.IS_COMPONENTS_V2,
-      components: [
-        {
-          type: ComponentType.TextDisplay,
-          content: message,
-        },
-      ],
-    },
-  });
-}

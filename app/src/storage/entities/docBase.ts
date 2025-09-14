@@ -25,3 +25,5 @@ export function docToEntity<T>(doc: FirebaseFirestore.DocumentData, doLog?: bool
   }
   return entity;
 }
+
+export type FirebaseEntity = { name?: string; meta?: { id?: string } };

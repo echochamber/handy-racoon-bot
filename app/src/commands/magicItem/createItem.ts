@@ -1,11 +1,9 @@
-import { Request, Response } from 'express';
-import { APIInteraction, APIModalSubmitInteraction, ApplicationCommandType, ApplicationIntegrationType, ComponentType, InteractionContextType, InteractionResponseType, RESTPostAPIApplicationCommandsJSONBody, SelectMenuDefaultValueType, TextInputStyle } from 'discord-api-types/v10';
-import { playerDao } from '@/storage/entities/player.js';
+import { characterDao, STASH_ID } from '@/storage/entities/character.js';
+import { magicItemDao, MagicItem } from '@/storage/entities/magicItem.js';
 import { db } from '@/storage/firebase.js';
-import { Character, characterDao } from '@/storage/entities/character.js';
-import { InteractionResponseFlags } from 'discord-interactions';
-import { lookupUser, modalSuccessMessage as modalResponseMessage } from '@/util/discordAPI.js';
-import magicItemDao, { MagicItem } from '@/storage/entities/magicItem.js';
+import { modalCharacterSelect, modalResponseMessage } from '@/util/discordMessageUtil.js';
+import { APIModalSubmitInteraction, ApplicationCommandType, ApplicationIntegrationType, ComponentType, InteractionContextType, InteractionResponseType, RESTPostAPIApplicationCommandsJSONBody, TextInputStyle } from 'discord-api-types/v10';
+import { Request, Response } from 'express';
 
 export const ADD_ITEM_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {
   name: 'add_magic_item',
@@ -15,9 +13,9 @@ export const ADD_ITEM_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {
   integration_types: [ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall]
 }
 
-export const SUBMIT_CUSTOM_ID = 'add_magic_item';
+export const SUBMIT_CUSTOM_ID = 'add_magic_item_modal_submit';
 const modalFields = {
-  OWNER_ID: 'owner_id',
+  OWNER_ID: 'character_select',
   ITEM_NAME: 'item_name',
   ITEM_DESCRIPTION: 'item_description',
   IS_ATTUNED: 'is_attuned',
@@ -26,32 +24,13 @@ const modalFields = {
 
 export async function handleInitiate(req: Request, res: Response) {
   const characters = await characterDao.all(db);
-  const characterOptions = [
-    { label: "Stash", value: "stash", default: true},
-    ...characters.map(c => ({
-      label: c.name,
-      value: c.meta?.id,
-    })),
-  ];
-  return res.send({
+  res.send({
     type: InteractionResponseType.Modal,
     data: {
       custom_id: SUBMIT_CUSTOM_ID,
       title: 'Add Magic Item',
       components: [
-        {
-          type: ComponentType.Label,
-          label: 'Owner (Blank for Stash)',
-          component: {
-            type: ComponentType.StringSelect,
-            custom_id: modalFields.OWNER_ID,
-            min_values: 1,
-            max_values: 1,
-            options: characterOptions,
-            placeholder: "Character",
-            required: false
-          }
-        },
+        modalCharacterSelect(characters, 'Owner', true, STASH_ID),
         {
           type: ComponentType.Label,
           label: 'Item Name',
@@ -90,8 +69,8 @@ export async function handleInitiate(req: Request, res: Response) {
               },
               {
                 "label": "No",
-                "value": "0",
-                "default": false,
+                "value": false,
+                "default": true,
               },
             ]
           },
@@ -111,23 +90,15 @@ export async function handleModalSubmission(req: Request, res: Response) {
   const desc = fields.find((c: any) => c.custom_id === modalFields.ITEM_DESCRIPTION && c.type === ComponentType.TextInput)?.value?.trim() as string;
   const ownerId = fields.find((c: any) => c.custom_id === modalFields.OWNER_ID && c.type === ComponentType.StringSelect)?.values?.[0] as string;
   const isAttuned = Boolean(Number(fields.find((c: any) => c.custom_id === modalFields.IS_ATTUNED && c.type === ComponentType.StringSelect)?.values?.[0]))
-  console.log(fields);
-  console.log(isAttuned);
-
+  console.log(fields, ownerId);
   var item: MagicItem = {
     name: name,
     description: desc,
     isAttuned: isAttuned,
-    ownerId: ownerId == "stash" ? undefined : ownerId
+    ownerId: ownerId
   }
-  magicItemDao.create(db, item, true)
-    .then(i => modalResponseMessage(res, `Item ${name} created.`))
-    .catch(i => {
-      modalResponseMessage(res, `Failed to create item ${name}.`)
-      throw i;
-    });
-
-
+  const createdItem = await magicItemDao.create(db, item, true)
+  res.send(modalResponseMessage(res, `Item ${createdItem.name} created.`));
 }
 
 export const addItem = {

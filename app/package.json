@@ -11,16 +11,19 @@
   "scripts": {
     "start": "functions-framework --target=TypescriptFunction",
     "ffstart": "yarn run build && tsc-alias && functions-framework --target=discordBot --source=dist/src/appGcp.js",
-    "register": "tsx src/commands.ts",
+    "register": "tsx src/register.ts",
     "dev": "tsx watch src/appLocal.ts",
     "build": "tsc",
     "prestart": "yarn run build && tsc-alias",
     "gcp-build": "yarn run build && tsc-alias",
-    "test": "mocha"
+    "test": "mocha",
+    "seedData": "tsx src/scripts/seedData.ts",
+    "createStash": "tsx src/scripts/createStashCharacter.ts"
   },
   "author": "Jason Schein",
   "license": "MIT",
   "dependencies": {
+    "@faker-js/faker": "^10.0.0",
     "@google-cloud/functions-framework": "^4.0.0",
     "discord-api-types": "^0.38.24",
     "discord-interactions": "^4.0.0",

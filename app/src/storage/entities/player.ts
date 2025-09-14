@@ -41,7 +41,7 @@ export async function findOrCreate(db: Firestore, discordId: string, discordName
 }
 
 export const playerDao = {
-  findByDiscordId,
-  findOrCreate
+  findByDiscordId: findByDiscordId,
+  findOrCreate: findOrCreate
 }
 

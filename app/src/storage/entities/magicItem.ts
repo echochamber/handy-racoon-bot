@@ -12,16 +12,16 @@ export interface MagicItem extends BaseDoc{
 }
 
 
-export async function addMagicItem(db: Firestore, item: MagicItem, doLog?: boolean): Promise<MagicItem> {
+export async function create(db: Firestore, item: MagicItem, doLog?: boolean): Promise<MagicItem> {
 
   const col = db.collection("magicItems");
   const itemDoc = col.doc();
   if (item.ownerId && item.isAttuned) {
-    characterDao.addAttunedItem(db, item.ownerId, itemDoc.id);
+    const attune = characterDao.attuneItem(db, item.ownerId, itemDoc.id);
   }
   const now = FieldValue.serverTimestamp();
 
-  await itemDoc.set({
+  const createI =  itemDoc.set({
     ...item,
     updatedAt: now,
     createdAt: now
@@ -32,12 +32,40 @@ export async function addMagicItem(db: Firestore, item: MagicItem, doLog?: boole
 
   if (doLog) {
     console.log(`MagicItem created with ID: ${itemDoc.id}`);
+    console.log(item);
   }
 
   return item;
 }
 
-export async function getAllItems(db: Firestore) {
+export async function stashItem(db: Firestore, itemId: string): Promise<void> {
+  // Find the item
+  const itemDoc = db.collection("magicItems").doc(itemId);
+  const itemSnap = await itemDoc.get();
+  if (!itemSnap.exists) {
+    throw new Error(`MagicItem with id ${itemId} does not exist`);
+  }
+  const item = docToEntity<MagicItem>(itemSnap);
+
+  // Unattune from existing owner if necessary.
+  if (item.ownerId && item.isAttuned) {
+    await characterDao.unattuneItem(db, item.ownerId, itemId);
+  }
+
+  // Set owner to stash.
+  const stashChars = await db.collection("characters").where("name", "==", "Stash").limit(1).get();
+  if (stashChars.empty) {
+    throw new Error('No character named "Stash" found');
+  }
+  const stashId = stashChars.docs[0].id;
+  await itemDoc.update({
+    ownerId: stashId,
+    isAttuned: false,
+    updatedAt: FieldValue.serverTimestamp()
+  });
+}
+
+export async function all(db: Firestore) {
   try {
     const collection = await db.collection("magicItems").get();
 
@@ -48,7 +76,7 @@ export async function getAllItems(db: Firestore) {
   }
 }
 
-export async function findItem(db: Firestore, id: string) {
+export async function find(db: Firestore, id: string) {
   try {
     const d = await db.collection("magicItems").doc(id).get();
     return docToEntity<MagicItem>(d);
@@ -96,12 +124,21 @@ export async function findByIds(db: Firestore, ids: string[]): Promise<MagicItem
     .map(snap => docToEntity<MagicItem>(snap));
 }
 
-export default {
-  create: addMagicItem,
-  find: findItem,
-  all: getAllItems,
-  findByCharacter: findByCharacter,
-  findByIds: findByIds,
-  update: update
+export async function clear(db: Firestore): Promise<void> {
+  const col = db.collection("magicItems");
+  const snapshot = await col.get();
+  const batch = db.batch();
+  snapshot.docs.forEach(doc => batch.delete(doc.ref));
+  await batch.commit();
+}
+
+export const magicItemDao = {
+  create,
+  find,
+  all,
+  findByCharacter,
+  findByIds,
+  update,
+  clear
 };
 

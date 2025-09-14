@@ -13,7 +13,7 @@ export const ADD_CHARACTER_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {
   integration_types: [ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall]
 }
 
-export const SUBMIT_CUSTOM_ID = 'add_character';
+export const SUBMIT_CUSTOM_ID = 'add_character_modal_submit';
 
 
 
@@ -25,7 +25,7 @@ export function handleInitiate(req: Request, res: Response) {
   res.send({
     type: InteractionResponseType.Modal,
     data: {
-      custom_id: 'add_character',
+      custom_id: SUBMIT_CUSTOM_ID,
       title: 'Add Character',
       components: [
         {
@@ -58,7 +58,7 @@ export function handleInitiate(req: Request, res: Response) {
             custom_id: 'character_description',
             style: TextInputStyle.Paragraph,
             required: false,
-            max_length: 50,
+            max_length: 250,
           },
         },
       ],
@@ -78,14 +78,27 @@ export async function handleModalSubmission(req: Request, res: Response) {
     && c.type === ComponentType.TextInput)?.value?.trim();
   const characterDesc = fields.find((c: any) =>
     c.custom_id === 'character_description'
-    && c.type === ComponentType.TextInput)?.value?.trim();
+    && c.type === ComponentType.TextInput)?.value?.trim() ?? '';
+
+    // Check if character with the same name already exists for this user
+    const existing = await characterDao.findByName(db, characterName);
+    console.log(existing);
+    if (existing.length) {
+      return res.send({
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: `Character creation failed: a character named "${characterName}" already exists.`,
+          flags: InteractionResponseFlags.EPHEMERAL,
+        },
+      });
+    }
 
   var character: Character = {
     name: String(characterName),
     description: characterDesc,
     attunedItemIds: []
   }
-  characterDao.create(db, userId, character, true)
+  characterDao.create(db, character, userId, true)
     .then(i => modalResponseMessage(res, `Character ${characterName} created.`))
     .catch(i => {
       modalResponseMessage(res, `Failed to create ${characterName}.`)
@@ -101,13 +114,20 @@ export function processUser(userId: Number) {
   })
 }
 
+
+function modalResponseMessage(res: Response<any, Record<string, any>>, message: string): any {
+  res.send({
+    type: InteractionResponseType.ChannelMessageWithSource,
+    data: {
+      flags: InteractionResponseFlags.EPHEMERAL,
+      content: message,
+    },
+  });
+}
+
 export const addCharacter = {
   command: ADD_CHARACTER_COMMAND,
   submit_id: SUBMIT_CUSTOM_ID,
   initiate: handleInitiate,
   submit: handleModalSubmission,
-}
-
-function modalResponseMessage(res: Response<any, Record<string, any>>, arg1: string): any {
-  throw new Error('Function not implemented.');
 }

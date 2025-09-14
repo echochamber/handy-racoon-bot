@@ -1,22 +1,20 @@
 import { Request, Response } from 'express';
-import { APIInteraction, APIMessageComponentSelectMenuInteraction, APIModalSubmitInteraction, ApplicationCommandType, ApplicationIntegrationType, ComponentType, InteractionContextType, InteractionResponseType, RESTPostAPIApplicationCommandsJSONBody, SelectMenuDefaultValueType, TextInputStyle } from 'discord-api-types/v10';
+import { APIInteraction, APIMessageComponentSelectMenuInteraction, ApplicationCommandType, ApplicationIntegrationType, ComponentType, InteractionContextType, InteractionResponseType, RESTPostAPIApplicationCommandsJSONBody } from 'discord-api-types/v10';
 import { db } from '@/storage/firebase.js';
-import { Character, characterDao } from '@/storage/entities/character.js';
+import { characterDao } from '@/storage/entities/character.js';
 import { InteractionResponseFlags } from 'discord-interactions';
-import { lookupUser } from '@/util/discordAPI.js';
-import magicItemDao from '@/storage/entities/magicItem.js';
+import { magicItemDao } from '@/storage/entities/magicItem.js';
+import display from '@/util/display.js';
 
-export const LIST_ATTUNEMENTS_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {
-  name: 'list_attunements',
-  description: 'List attunements for a character',
+export const LIST_ITEMS_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {
+  name: 'list_magic_items',
+  description: 'List all magic items a character owns',
   type: ApplicationCommandType.ChatInput,
   contexts: [InteractionContextType.BotDM, InteractionContextType.Guild, InteractionContextType.PrivateChannel],
   integration_types: [ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall]
 }
-export const SELECT_CHARACTER_ID = 'list_attunements_select_character';
 
-
-
+export const SELECT_CHARACTER = 'list_magic_items_select_character';
 
 export async function handleInitiate(req: Request, res: Response) {
   const characters = await characterDao.all(db);
@@ -33,7 +31,7 @@ export async function handleInitiate(req: Request, res: Response) {
           type: ComponentType.ActionRow,
           components: [{
             type: ComponentType.StringSelect,
-            custom_id: SELECT_CHARACTER_ID,
+            custom_id: SELECT_CHARACTER,
             min_values: 1,
             max_values: 1,
             options: characterOptions,
@@ -49,7 +47,6 @@ export async function handleInitiate(req: Request, res: Response) {
 export async function handleCharacterSelect(req: Request, res: Response) {
   const interaction = req.body as APIInteraction;
   const comp = interaction as APIMessageComponentSelectMenuInteraction;
-  console.log(comp.data);
   if (!comp.data || !comp.data.values || !comp.data.values[0]) {
     return res.send({
       type: InteractionResponseType.ChannelMessageWithSource,
@@ -61,35 +58,45 @@ export async function handleCharacterSelect(req: Request, res: Response) {
   }
   const selectedCharacterId = comp.data.values[0];
 
-  const character = await characterDao.find(db, selectedCharacterId);
-  if (!character) {
+  const items = await magicItemDao.findByCharacter(db, selectedCharacterId);
+
+  if (!items || items.length === 0) {
     return res.send({
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
-        content: "Character not found.",
+        content: "This character owns no magic items.",
         flags: InteractionResponseFlags.EPHEMERAL,
       },
     });
   }
-  const items = await magicItemDao.findByIds(db, character.attunedItemIds)
-  const itemString = items.map(i => "* " + i.name).join("\n");
+
+  const itemList = items.map(item => {
+    const attuned = item.isAttuned ? " (attuned)" : "";
+    return `• ${item.name}${attuned}`;
+  }).join('\n');
+
+  // Find the selected character's name
+  const selectedCharacter = await characterDao.find(db, selectedCharacterId);
+  const characterName = selectedCharacter ? selectedCharacter.name : "Unknown Character";
 
   return res.send({
-    type: InteractionResponseType.ChannelMessageWithSource,
+    type: InteractionResponseType.UpdateMessage,
     data: {
-      content: `**${character.name}** has attuned...\n${itemString}`,
       flags: InteractionResponseFlags.EPHEMERAL,
+      embeds: [
+        {
+          title: `${characterName}: Owned Magic items `,
+          description: items.map(display.item).join('\n'),
+          color: 0x5865F2, // Discord blurple accent
+        }
+      ],
     },
   });
 }
 
-export const listAttunements = {
-  command: LIST_ATTUNEMENTS_COMMAND,
-  select_character_id: SELECT_CHARACTER_ID,
+export const listMagicItems = {
+  command: LIST_ITEMS_COMMAND,
+  select_character_id: SELECT_CHARACTER,
   initiate: handleInitiate,
-  handle: handleCharacterSelect,
-}
-
-function modalResponseMessage(res: Response<any, Record<string, any>>, arg1: string): any {
-  throw new Error('Function not implemented.');
-}
+  handleCharacterSelect: handleCharacterSelect,
+};
