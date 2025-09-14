@@ -14,7 +14,7 @@ import {
 import { db } from '@/storage/firebase.js';
 import { Character, characterDao } from '@/storage/entities/character.js';
 import { InteractionResponseFlags } from 'discord-interactions';
-import { modalResponseMessage } from '@/util/discordMessageUtil.js';
+import { modalResponseMessage } from '@/commands/discordMessageUtil.js';
 
 export const UPDATE_CHARACTER_DESCRIPTION_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {
   name: 'update_character_description',
@@ -53,7 +53,6 @@ export async function handleInitiate(req: Request, res: Response) {
     label: c.name,
     value: c.meta?.id ?? "", // Use character id as value
   }));
-  console.log("hit", characterOptions);
 
   res.send({
     type: InteractionResponseType.Modal,

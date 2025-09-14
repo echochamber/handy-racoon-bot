@@ -17,6 +17,7 @@ import { db } from './storage/firebase.js';
 import { getRandomEmoji } from './util/misc.js';
 import { updateCharacterDescription } from './commands/character/updateCharacterDescription.js';
 import { showCharacter } from './commands/character/showCharacter.js';
+import oauthCallback from './auth/oauthHandler.js';
 
 function logAndSendError(res: Response, msg: string) {
   res.status(400).json({ error: msg });
@@ -33,7 +34,6 @@ function handleApplicationCommand(req: any, res: any) {
       console.log(`Test time: ${name}`);
       return handleTest(req, res);
     case characterRoot.command.name:
-      console.log("hit");
       return characterRoot.initiate(req, res);
     case magicItemRoot.command.name:
       return magicItemRoot.initiate(req, res);
@@ -107,24 +107,20 @@ const app = express();
 
 // Random endpoints for debugging.
 app.get('/', async function (req, res) {
-  console.log("Request received");
   return res.send({content: `hello world ${getRandomEmoji()}`});
 });
 app.get('/local', async function (req, res) {
-  console.log("Request received");
   const [res1, res2] = await tryIt(db);
   console.log(`Results are (${res1.writeTime}, ${res2.writeTime})`);
   return res.send({content: `hello world ${getRandomEmoji()}`});
 });
 app.get('/local2', async function (req, res) {
-  console.log("Request received");
   const res1 = await tryIt3(db);
   return res.send({content: `hello world ${getRandomEmoji()}`});
 });
 
 
-app.post('/interactions', verifyKeyMiddleware(config.publicKey), async function (req, res) {
-  console.log("Request received");
+app.post('/interactions', verifyKeyMiddleware(config.PUBLIC_KEY), async function (req, res) {
   const { type } = req.body;
 
   // Slash commands
@@ -143,5 +139,7 @@ app.post('/interactions', verifyKeyMiddleware(config.publicKey), async function 
   }
 });
 
+app.use('/auth/oauth', oauthCallback.router);
+console.log(`To authorize oauth go to https://discord.com/oauth2/authorize?client_id=${config.OAUTH_CLIENT_ID}&redirect_uri=${config.OAUTH_REDIRECT_URI}&response_type=code&scope=guilds`)
 
 export default app;

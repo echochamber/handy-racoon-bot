@@ -26,8 +26,6 @@ export function detailedCharacterMessage(character: Partial<Character>, items: M
         ],
       },
     };
-    console.log(res);
-    console.log(res.data.embeds[0]);
     return res;
 }
 

@@ -1,7 +1,7 @@
 import { characterDao, STASH_ID } from '@/storage/entities/character.js';
 import { magicItemDao, MagicItem } from '@/storage/entities/magicItem.js';
 import { db } from '@/storage/firebase.js';
-import { modalCharacterSelect, modalResponseMessage } from '@/util/discordMessageUtil.js';
+import { modalCharacterSelect, modalResponseMessage } from '@/commands/discordMessageUtil.js';
 import { APIModalSubmitInteraction, ApplicationCommandType, ApplicationIntegrationType, ComponentType, InteractionContextType, InteractionResponseType, RESTPostAPIApplicationCommandsJSONBody, TextInputStyle } from 'discord-api-types/v10';
 import { Request, Response } from 'express';
 
@@ -90,7 +90,6 @@ export async function handleModalSubmission(req: Request, res: Response) {
   const desc = fields.find((c: any) => c.custom_id === modalFields.ITEM_DESCRIPTION && c.type === ComponentType.TextInput)?.value?.trim() as string;
   const ownerId = fields.find((c: any) => c.custom_id === modalFields.OWNER_ID && c.type === ComponentType.StringSelect)?.values?.[0] as string;
   const isAttuned = Boolean(Number(fields.find((c: any) => c.custom_id === modalFields.IS_ATTUNED && c.type === ComponentType.StringSelect)?.values?.[0]))
-  console.log(fields, ownerId);
   var item: MagicItem = {
     name: name,
     description: desc,
@@ -98,7 +97,7 @@ export async function handleModalSubmission(req: Request, res: Response) {
     ownerId: ownerId
   }
   const createdItem = await magicItemDao.create(db, item, true)
-  res.send(modalResponseMessage(res, `Item ${createdItem.name} created.`));
+  res.send(modalResponseMessage(res, `Item ${createdItem.name} created.`, false));
 }
 
 export const addItem = {

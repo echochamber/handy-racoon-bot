@@ -1,7 +1,7 @@
 import { characterDao } from '@/storage/entities/character.js';
 import { MagicItem, magicItemDao } from '@/storage/entities/magicItem.js';
 import { db } from '@/storage/firebase.js';
-import { messageSelectEntity, simpleErrorEphemeral, simpleUpdateEphemeral } from '@/util/discordMessageUtil.js';
+import { messageSelectEntity, simpleErrorEphemeral, simpleUpdate } from '@/commands/discordMessageUtil.js';
 import {
   APIInteraction,
   APIMessageComponentSelectMenuInteraction,
@@ -145,7 +145,7 @@ export async function handleToCharacterSelect(req: Request, res: Response) {
   }
   characterDao.transferItem(db, fromCharacterId, toCharacterId, itemId);
 
-  res.send(simpleUpdateEphemeral(`Transferred "${item.name}" from ${fromCharacter.name} to ${toCharacter.name}.`));
+  res.send(simpleUpdate(`Transferred "${item.name}" from ${fromCharacter.name} to ${toCharacter.name}.`));
 }
 
 export const transferItem = {

@@ -3,7 +3,7 @@ import { APIInteraction, APIMessageComponentSelectMenuInteraction, APIModalSubmi
 import { db } from '@/storage/firebase.js';
 import { Character, characterDao } from '@/storage/entities/character.js';
 import { InteractionResponseFlags } from 'discord-interactions';
-import { lookupUser } from '@/util/discordAPI.js';
+import { lookupUser } from '@/discord/discordAPI.js';
 import { magicItemDao } from '@/storage/entities/magicItem.js';
 
 export const LIST_ATTUNEMENTS_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {
@@ -49,7 +49,6 @@ export async function handleInitiate(req: Request, res: Response) {
 export async function handleCharacterSelect(req: Request, res: Response) {
   const interaction = req.body as APIInteraction;
   const comp = interaction as APIMessageComponentSelectMenuInteraction;
-  console.log(comp.data);
   if (!comp.data || !comp.data.values || !comp.data.values[0]) {
     return res.send({
       type: InteractionResponseType.ChannelMessageWithSource,

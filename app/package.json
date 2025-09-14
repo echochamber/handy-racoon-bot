@@ -18,6 +18,7 @@
     "gcp-build": "yarn run build && tsc-alias",
     "test": "mocha",
     "seedData": "tsx src/scripts/seedData.ts",
+    "discordDebug": "tsx src/scripts/discordDebug.ts",
     "createStash": "tsx src/scripts/createStashCharacter.ts"
   },
   "author": "Jason Schein",

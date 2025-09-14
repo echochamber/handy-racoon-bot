@@ -172,7 +172,6 @@ export async function transferItem(
     
 
     const fromChar = fromSnap.data() as Character;
-    console.log("hit222", fromChar);
     // Unattune if its attuned to the source character
     if (fromChar.attunedItemIds.includes(itemId)) {
       const newFromAttuned = fromChar.attunedItemIds.filter(id => id !== itemId);

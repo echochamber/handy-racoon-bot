@@ -1,11 +1,18 @@
+import { config } from "@/config.js";
+import { executeDiscordRequest } from "@/discord/discordAPI.js";
 import { Character } from "@/storage/entities/character.js";
 import { FirebaseEntity } from "@/storage/entities/docBase.js";
 import { MagicItem } from "@/storage/entities/magicItem.js";
-import { APIInteractionResponse, APIInteractionResponseChannelMessageWithSource, APIInteractionResponseUpdateMessage, ComponentType, InteractionResponseType, MessageFlags } from "discord-api-types/v10"
+import { APIInteraction, ComponentType, InteractionResponseType, MessageFlags } from "discord-api-types/v10";
 import { Response } from "express";
 
 
-
+export async function deleteEphemMessage(interaction: APIInteraction) {
+  const endpoint = `webhooks/${config.APPLICATION_ID}/${interaction.token}/messages/${interaction.message?.id}`;
+  // This function only builds the endpoint string.
+  // To actually delete the message, you would need to perform a DELETE request to this endpoint.
+  return await executeDiscordRequest(endpoint, { method: "DELETE" });
+}
 export function simpleErrorEphemeral(message: String, title: string = "Issue") {
   return {
     type: InteractionResponseType.ChannelMessageWithSource,
@@ -23,24 +30,35 @@ export function simpleErrorEphemeral(message: String, title: string = "Issue") {
 
 export function modalResponseMessage(
   res: Response,
-  message: string
+  message: string,
+  isEphemeral: boolean = true
 ): any {
   res.send({
     type: InteractionResponseType.ChannelMessageWithSource,
     data: {
       content: message,
-      flags: MessageFlags.Ephemeral,
+      flags: isEphemeral ? MessageFlags.Ephemeral : 0,
     },
   });
 }
 
-export function simpleUpdateEphemeral(message: string) {
+export function simpleUpdate(message: string, isEphemeral: boolean = true) {
   return {
     type: InteractionResponseType.UpdateMessage,
     data: {
-      flags: MessageFlags.Ephemeral,
+      flags: isEphemeral ? MessageFlags.Ephemeral : 0,
       content: message,
-      compontents: [],
+      components: [],
+    },
+  }
+}
+
+export function simpleMessage(message: string, isEphemeral: boolean = true) {
+  return {
+    type: InteractionResponseType.ChannelMessageWithSource,
+    data: {
+      flags: isEphemeral ? MessageFlags.Ephemeral : 0,
+      content: message,
     },
   }
 }
@@ -58,6 +76,7 @@ export function messageSelectEntity(args: SelectEntityArgs)  {
   const val = {
     type: args.isUpdate ? InteractionResponseType.UpdateMessage: InteractionResponseType.ChannelMessageWithSource,
     data: {
+      flags: MessageFlags.Ephemeral,
       content: args.label,
       components: [
         {
@@ -73,10 +92,8 @@ export function messageSelectEntity(args: SelectEntityArgs)  {
           }]
         },
       ],
-      flags: MessageFlags.Ephemeral,
     },
   };
-  console.log(val);
   // TODO Fix type error.
   return val;
 }

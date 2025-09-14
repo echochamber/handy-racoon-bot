@@ -4,7 +4,7 @@ import { db } from '@/storage/firebase.js';
 import { characterDao } from '@/storage/entities/character.js';
 import { InteractionResponseFlags } from 'discord-interactions';
 import { magicItemDao } from '@/storage/entities/magicItem.js';
-import display from '@/util/display.js';
+import display from '@/commands/display.js';
 
 export const LIST_ITEMS_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {
   name: 'list_magic_items',

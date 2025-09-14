@@ -5,11 +5,11 @@ import { config} from "../config.js";
 
 export const fbApp = initializeApp(
     {
-      projectId: config.gcpProject,
+      projectId: config.GCP_PROJECT,
       credential: applicationDefault(),
     },
-    config.firebaseApp
+    config.FIREBASE_APP
   );
 
-export const db: Firestore = getFirestore(fbApp, config.firebaseDb);
+export const db: Firestore = getFirestore(fbApp, config.FIREBASE_DB);
 db.settings({ ignoreUndefinedProperties: true });

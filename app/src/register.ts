@@ -8,7 +8,7 @@ import { transferItem } from './commands/magicItem/transferItem.js';
 import { unattuneItem } from './commands/magicItem/unattuneItem.js';
 import { config } from './config.js';
 import { TEST_COMMAND } from './demo/testCommand.js';
-import { DiscordRequest } from './util/discordAPI.js';
+import { executeDiscordRequest } from './discord/discordAPI.js';
 import { magicItemRoot } from './commands/magicItem/magicItemRoot.js';
 
 const ALL_COMMANDS = [
@@ -25,10 +25,10 @@ export async function InstallGlobalCommands(appId: string, commands: RESTPostAPI
   try {
     // This is calling the bulk overwrite endpoint:
     // https://discord.com/developers/docs/interactions/application-commands#bulk-overwrite-global-application-commands
-    await DiscordRequest(endpoint, { method: 'PUT', body: commands });
+    await executeDiscordRequest(endpoint, { method: 'PUT', body: commands });
   } catch (err) {
     console.error(err);
   }
 }
 
-InstallGlobalCommands(config.applicationId, ALL_COMMANDS);
+InstallGlobalCommands(config.APPLICATION_ID, ALL_COMMANDS);

@@ -12,7 +12,7 @@ import {
 import { db } from '@/storage/firebase.js';
 import { characterDao } from '@/storage/entities/character.js';
 import { InteractionResponseFlags } from 'discord-interactions';
-import display from '@/util/display.js';
+import display from '@/commands/display.js';
 import { magicItemDao } from '@/storage/entities/magicItem.js';
 
 export const SHOW_CHARACTER_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {

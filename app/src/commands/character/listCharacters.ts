@@ -12,25 +12,25 @@ export const LIST_ALL_CHARACTERS_COMMAND: RESTPostAPIApplicationCommandsJSONBody
   integration_types: [ApplicationIntegrationType.GuildInstall, ApplicationIntegrationType.UserInstall]
 }
 
-
-
+// type: ComponentType.Container,
+// accent_color: 0x5865F2, // Discord blurple as a nice accent color
+const accentColors = [0x5865F2, 0x57F287, 0xEB459E]; // Discord blurple, green, pink
 export async function initiate(req: Request, res: Response) {
   const characters: Character[] = await characterDao.all(db);
-  return res.send({
+  res.send({
     type: InteractionResponseType.ChannelMessageWithSource,
     data: {
+      flags: InteractionResponseFlags.IS_COMPONENTS_V2,
       components: characters
-      .filter(c => c.name !== STASH_CHARACTER.name)
-        .map((character) => ({
-        type: ComponentType.Container,
-        accent_color: 0x5865F2, // Discord blurple as a nice accent color
-        components: [
-          {
+        .filter(c => c.name !== STASH_CHARACTER.name)
+        .map((character, idx) => ({
+          type: ComponentType.Container,
+          accent_color: accentColors[idx % 3],
+          components: [{
             type: ComponentType.TextDisplay,
             content: `# ${character.name}\n > ${character.description}`,
-          },
-        ],
-      })),
+          }]
+        })),
     },
   });
 }

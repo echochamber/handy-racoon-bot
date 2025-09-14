@@ -3,7 +3,7 @@ import { APIInteraction, APIModalSubmitInteraction, ApplicationCommandType, Appl
 import { db } from '@/storage/firebase.js';
 import { Character, characterDao } from '@/storage/entities/character.js';
 import { InteractionResponseFlags } from 'discord-interactions';
-import { lookupUser } from '@/util/discordAPI.js';
+import { lookupUser } from '@/discord/discordAPI.js';
 
 export const ADD_CHARACTER_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {
   name: 'add_character',

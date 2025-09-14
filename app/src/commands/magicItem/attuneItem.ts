@@ -1,8 +1,8 @@
 import { characterDao } from '@/storage/entities/character.js';
 import { MagicItem, magicItemDao } from '@/storage/entities/magicItem.js';
 import { db } from '@/storage/firebase.js';
-import { messageSelectEntity, simpleErrorEphemeral, simpleUpdateEphemeral } from '@/util/discordMessageUtil.js';
-import { APIInteraction, APIMessageComponentSelectMenuInteraction, ApplicationCommandType, ApplicationIntegrationType, ComponentType, InteractionContextType, InteractionResponseType, RESTPostAPIApplicationCommandsJSONBody } from 'discord-api-types/v10';
+import { messageSelectEntity, simpleErrorEphemeral, simpleUpdate } from '@/commands/discordMessageUtil.js';
+import { APIInteraction, APIMessageComponentSelectMenuInteraction, ApplicationCommandType, ApplicationIntegrationType, ComponentType, InteractionContextType, InteractionResponseType, MessageFlags, RESTPostAPIApplicationCommandsJSONBody } from 'discord-api-types/v10';
 import { InteractionResponseFlags } from 'discord-interactions';
 import { Request, Response } from 'express';
 
@@ -25,37 +25,22 @@ const messageFields = {
 
 export async function handleInitiate(req: Request, res: Response) {
   const characters = await characterDao.all(db);
-  const characterOptions = characters.map(c => ({
-    label: c.name,
-    value: c.meta?.id,
-  }));
-  return res.send({
-    type: InteractionResponseType.ChannelMessageWithSource,
-    data: {
-      title: 'Select Character',
-      components: [
-        {
-          type: ComponentType.ActionRow,
-          components: [{
-            type: ComponentType.StringSelect,
-            custom_id: SELECT_CHARACTER,
-            min_values: 1,
-            max_values: 1,
-            options: characterOptions,
-            placeholder: "Character",
-            required: true
-          }]
-        },
-      ],
-    },
-  });
+  res.send(messageSelectEntity(
+      {
+        entities: characters,
+        label: 'Select Character',
+        placeholder: 'Character',
+        customId: SELECT_CHARACTER,
+        defaultId: undefined,
+        isUpdate: false,
+        required: true
+      }));
 }
 
 export async function handleCharacterSelect(req: Request, res: Response) {
   const interaction = req.body as APIInteraction;
   const comp = interaction as APIMessageComponentSelectMenuInteraction;
   if (!comp.data || !comp.data.values || !comp.data.values[0]) {
-    console.log(comp);
     res.send(simpleErrorEphemeral("Interaction missing data."));
     console.error(`Interaction missing data ${JSON.stringify(comp.data)}`);
   }
@@ -66,7 +51,8 @@ export async function handleCharacterSelect(req: Request, res: Response) {
       return;
   }
 
-  const items = await magicItemDao.findByCharacter(db, selectedCharacterId);
+  const items = (await magicItemDao.findByCharacter(db, selectedCharacterId))
+      .filter(item => !item.isAttuned);
 
   if (items.length === 0) {
     res.send(simpleErrorEphemeral("This character has no unattuned magic items."));
@@ -87,7 +73,6 @@ export async function handleCharacterSelect(req: Request, res: Response) {
 export async function handleItemSelect(req: Request, res: Response) {
   const interaction = req.body as APIInteraction;
   const comp = interaction as APIMessageComponentSelectMenuInteraction;
-  console.log(comp.data);
   if (!comp.data || !comp.data.values || !comp.data.values[0]) {
     return res.send(simpleErrorEphemeral("No item selected."));
   }
@@ -125,7 +110,7 @@ export async function handleItemSelect(req: Request, res: Response) {
     ]);
   }
 
-  res.send(simpleUpdateEphemeral(`${character.name} now has attuned "${item.name}".`));
+  res.send(simpleUpdate(`${character.name} now has attuned "${item.name}".`, false));
 }
 
 export const attuneItem = {
