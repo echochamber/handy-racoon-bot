@@ -5,6 +5,7 @@ import { Character, characterDao } from '@/storage/entities/character.js';
 import { InteractionResponseFlags } from 'discord-interactions';
 import { lookupUser } from '@/discord/discordAPI.js';
 import { magicItemDao } from '@/storage/entities/magicItem.js';
+import { deleteEphemMessage, messageSelectEntity, simpleMessage, simpleUpdate } from '../discordMessageUtil.js';
 
 export const LIST_ATTUNEMENTS_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {
   name: 'list_attunements',
@@ -20,30 +21,16 @@ export const SELECT_CHARACTER_ID = 'list_attunements_select_character';
 
 export async function handleInitiate(req: Request, res: Response) {
   const characters = await characterDao.all(db);
-  const characterOptions = characters.map(c => ({
-      label: c.name,
-      value: c.meta?.id,
-  }));
-  return res.send({
-    type: InteractionResponseType.ChannelMessageWithSource,
-    data: {
-      title: 'Select Character',
-      components: [
-        {
-          type: ComponentType.ActionRow,
-          components: [{
-            type: ComponentType.StringSelect,
-            custom_id: SELECT_CHARACTER_ID,
-            min_values: 1,
-            max_values: 1,
-            options: characterOptions,
-            placeholder: "Character",
-            required: true
-          }]
-        },
-      ],
-    },
-  });
+  res.send(messageSelectEntity(
+    {
+      entities: characters,
+      label: 'Select Character',
+      placeholder: 'Character',
+      customId: SELECT_CHARACTER_ID,
+      defaultId: undefined,
+      isUpdate: false,
+      required: true
+    }));
 }
 
 export async function handleCharacterSelect(req: Request, res: Response) {
@@ -73,13 +60,8 @@ export async function handleCharacterSelect(req: Request, res: Response) {
   const items = await magicItemDao.findByIds(db, character.attunedItemIds)
   const itemString = items.map(i => "* " + i.name).join("\n");
 
-  return res.send({
-    type: InteractionResponseType.UpdateMessage,
-    data: {
-      flags: InteractionResponseFlags.EPHEMERAL,
-      content: `**${character.name}** has attuned...\n${itemString}`,
-    },
-  });
+  deleteEphemMessage(interaction);
+  res.send(simpleMessage(`**${character.name}** has attuned...\n${itemString}`, false));
 }
 
 

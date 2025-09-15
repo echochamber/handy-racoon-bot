@@ -1,7 +1,7 @@
 import { characterDao } from '@/storage/entities/character.js';
 import { MagicItem, magicItemDao } from '@/storage/entities/magicItem.js';
 import { db } from '@/storage/firebase.js';
-import { deleteEphemMessage, messageSelectEntity, simpleErrorEphemeral, simpleMessage, simpleUpdate } from '@/commands/discordMessageUtil.js';
+import { deleteEphemMessage, finalInteraction as completeInteraction, messageSelectEntity, simpleErrorEphemeral, simpleMessage, simpleUpdate } from '@/commands/discordMessageUtil.js';
 import { APIInteraction, APIMessageComponentSelectMenuInteraction, ApplicationCommandType, ApplicationIntegrationType, InteractionContextType, RESTPostAPIApplicationCommandsJSONBody } from 'discord-api-types/v10';
 import { Request, Response } from 'express';
 
@@ -95,8 +95,7 @@ export async function handleItemSelect(req: Request, res: Response) {
     magicItemDao.update(db, { ...item, isAttuned: false }),
   ]);
 
-  deleteEphemMessage(interaction);
-  res.send(simpleMessage(`**${character.name}** has unattuned **${item.name}**.`, false));
+  completeInteraction(res, interaction, `**${character.name}** has unattuned **${item.name}**.`, false);
 }
 
 export const unattuneItem = {

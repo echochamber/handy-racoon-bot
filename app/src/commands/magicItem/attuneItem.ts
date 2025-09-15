@@ -1,7 +1,7 @@
 import { characterDao } from '@/storage/entities/character.js';
 import { MagicItem, magicItemDao } from '@/storage/entities/magicItem.js';
 import { db } from '@/storage/firebase.js';
-import { messageSelectEntity, simpleErrorEphemeral, simpleUpdate } from '@/commands/discordMessageUtil.js';
+import { deleteEphemMessage, finalInteraction, messageSelectEntity, simpleErrorEphemeral, simpleMessage, simpleUpdate } from '@/commands/discordMessageUtil.js';
 import { APIInteraction, APIMessageComponentSelectMenuInteraction, ApplicationCommandType, ApplicationIntegrationType, ComponentType, InteractionContextType, InteractionResponseType, MessageFlags, RESTPostAPIApplicationCommandsJSONBody } from 'discord-api-types/v10';
 import { InteractionResponseFlags } from 'discord-interactions';
 import { Request, Response } from 'express';
@@ -110,7 +110,7 @@ export async function handleItemSelect(req: Request, res: Response) {
     ]);
   }
 
-  res.send(simpleUpdate(`${character.name} now has attuned "${item.name}".`, false));
+  finalInteraction(res, interaction, `${character.name} now has attuned "${item.name}".`, true);
 }
 
 export const attuneItem = {

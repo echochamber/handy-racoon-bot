@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import {ApplicationCommandType, ApplicationIntegrationType, ComponentType, InteractionContextType, InteractionResponseType, RESTPostAPIApplicationCommandsJSONBody} from 'discord-api-types/v10';
+import {ApplicationCommandType, ApplicationIntegrationType, ComponentType, InteractionContextType, InteractionResponseType, MessageFlags, RESTPostAPIApplicationCommandsJSONBody} from 'discord-api-types/v10';
 import { db } from '@/storage/firebase.js';
 import { Character, characterDao, STASH_CHARACTER } from '@/storage/entities/character.js';
 import { InteractionResponseFlags } from 'discord-interactions';
@@ -20,7 +20,7 @@ export async function initiate(req: Request, res: Response) {
   res.send({
     type: InteractionResponseType.ChannelMessageWithSource,
     data: {
-      flags: InteractionResponseFlags.IS_COMPONENTS_V2,
+      flags: InteractionResponseFlags.IS_COMPONENTS_V2 + MessageFlags.Ephemeral,
       components: characters
         .filter(c => c.name !== STASH_CHARACTER.name)
         .map((character, idx) => ({

@@ -1,7 +1,7 @@
 import { characterDao, STASH_ID } from '@/storage/entities/character.js';
 import { magicItemDao, MagicItem } from '@/storage/entities/magicItem.js';
 import { db } from '@/storage/firebase.js';
-import { modalCharacterSelect, modalResponseMessage } from '@/commands/discordMessageUtil.js';
+import { deleteEphemMessage, finalInteraction, modalCharacterSelect, modalResponseMessage } from '@/commands/discordMessageUtil.js';
 import { APIModalSubmitInteraction, ApplicationCommandType, ApplicationIntegrationType, ComponentType, InteractionContextType, InteractionResponseType, RESTPostAPIApplicationCommandsJSONBody, TextInputStyle } from 'discord-api-types/v10';
 import { Request, Response } from 'express';
 
@@ -97,7 +97,7 @@ export async function handleModalSubmission(req: Request, res: Response) {
     ownerId: ownerId
   }
   const createdItem = await magicItemDao.create(db, item, true)
-  res.send(modalResponseMessage(res, `Item ${createdItem.name} created.`, false));
+  finalInteraction(res, interaction, `Item ${createdItem.name} created.`, true);
 }
 
 export const addItem = {

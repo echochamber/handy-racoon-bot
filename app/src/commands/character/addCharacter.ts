@@ -4,6 +4,7 @@ import { db } from '@/storage/firebase.js';
 import { Character, characterDao } from '@/storage/entities/character.js';
 import { InteractionResponseFlags } from 'discord-interactions';
 import { lookupUser } from '@/discord/discordAPI.js';
+import { simpleErrorEphemeral } from '../discordMessageUtil.js';
 
 export const ADD_CHARACTER_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {
   name: 'add_character',
@@ -84,13 +85,8 @@ export async function handleModalSubmission(req: Request, res: Response) {
     const existing = await characterDao.findByName(db, characterName);
     console.log(existing);
     if (existing.length) {
-      return res.send({
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: `Character creation failed: a character named "${characterName}" already exists.`,
-          flags: InteractionResponseFlags.EPHEMERAL,
-        },
-      });
+      simpleErrorEphemeral(`Character creation failed: a character named "${characterName}" already exists.`)
+      return;
     }
 
   var character: Character = {
@@ -99,7 +95,7 @@ export async function handleModalSubmission(req: Request, res: Response) {
     attunedItemIds: []
   }
   characterDao.create(db, character, userId, true)
-    .then(i => modalResponseMessage(res, `Character ${characterName} created.`))
+    .then(i => modalResponseMessage(res, `Character **${characterName}** created.`))
     .catch(i => {
       modalResponseMessage(res, `Failed to create ${characterName}.`)
       throw i;
@@ -119,7 +115,6 @@ function modalResponseMessage(res: Response<any, Record<string, any>>, message: 
   res.send({
     type: InteractionResponseType.ChannelMessageWithSource,
     data: {
-      flags: InteractionResponseFlags.EPHEMERAL,
       content: message,
     },
   });

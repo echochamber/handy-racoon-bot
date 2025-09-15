@@ -14,6 +14,7 @@ import { characterDao } from '@/storage/entities/character.js';
 import { InteractionResponseFlags } from 'discord-interactions';
 import display from '@/commands/display.js';
 import { magicItemDao } from '@/storage/entities/magicItem.js';
+import { deleteEphemMessage } from '../discordMessageUtil.js';
 
 export const SHOW_CHARACTER_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {
   name: 'show_character',
@@ -92,6 +93,7 @@ export async function handleCharacterSelect(req: Request, res: Response) {
 
   // Customize this string with whatever character details you want to show
 
+  deleteEphemMessage(interaction);
   return res.send(display.detailedCharacterMessage(character,items));
 }
 

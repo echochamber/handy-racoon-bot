@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
-import { APIInteraction, APIMessageComponentSelectMenuInteraction, ApplicationCommandType, ApplicationIntegrationType, ComponentType, InteractionContextType, InteractionResponseType, RESTPostAPIApplicationCommandsJSONBody } from 'discord-api-types/v10';
+import { APIInteraction, APIMessageComponentSelectMenuInteraction, ApplicationCommandType, ApplicationIntegrationType, ComponentType, InteractionContextType, InteractionResponseType, MessageFlags, RESTPostAPIApplicationCommandsJSONBody } from 'discord-api-types/v10';
 import { db } from '@/storage/firebase.js';
 import { characterDao } from '@/storage/entities/character.js';
 import { InteractionResponseFlags } from 'discord-interactions';
 import { magicItemDao } from '@/storage/entities/magicItem.js';
 import display from '@/commands/display.js';
+import { deleteEphemMessage, finalInteraction } from '../discordMessageUtil.js';
 
 export const LIST_ITEMS_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {
   name: 'list_magic_items',
@@ -70,28 +71,24 @@ export async function handleCharacterSelect(req: Request, res: Response) {
     });
   }
 
-  const itemList = items.map(item => {
-    const attuned = item.isAttuned ? " (attuned)" : "";
-    return `• ${item.name}${attuned}`;
-  }).join('\n');
-
   // Find the selected character's name
   const selectedCharacter = await characterDao.find(db, selectedCharacterId);
   const characterName = selectedCharacter ? selectedCharacter.name : "Unknown Character";
+  const msg = `# ${characterName}: Owned Magic items\n${items.map(display.item).join('\n')}`
+  finalInteraction(res, interaction, msg, true);
 
-  return res.send({
-    type: InteractionResponseType.UpdateMessage,
-    data: {
-      flags: InteractionResponseFlags.EPHEMERAL,
-      embeds: [
-        {
-          title: `${characterName}: Owned Magic items `,
-          description: items.map(display.item).join('\n'),
-          color: 0x5865F2, // Discord blurple accent
-        }
-      ],
-    },
-  });
+  // res.send({
+  //   type: InteractionResponseType.ChannelMessageWithSource,
+  //   data: {
+  //     embeds: [
+  //       {
+  //         title: `# ${characterName}: Owned Magic items\n`,
+  //         description: items.map(display.item).join('\n'),
+  //         color: 0x5865F2, // Discord blurple accent
+  //       }
+  //     ],
+  //   },
+  // });
 }
 
 export const listMagicItems = {

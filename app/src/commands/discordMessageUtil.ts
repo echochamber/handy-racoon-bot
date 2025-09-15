@@ -5,7 +5,17 @@ import { FirebaseEntity } from "@/storage/entities/docBase.js";
 import { MagicItem } from "@/storage/entities/magicItem.js";
 import { APIInteraction, ComponentType, InteractionResponseType, MessageFlags } from "discord-api-types/v10";
 import { Response } from "express";
+import { E } from "node_modules/@faker-js/faker/dist/airline-CHFQMWko.js";
 
+
+export async function finalInteraction(res: Response, interaction: APIInteraction, message: string, isEphemeral: boolean = true) {
+  if (isEphemeral) {
+    res.send(simpleUpdate(message, isEphemeral));
+  } else {
+    deleteEphemMessage(interaction);
+    res.send(simpleMessage(`message`, isEphemeral));
+  }
+}
 
 export async function deleteEphemMessage(interaction: APIInteraction) {
   const endpoint = `webhooks/${config.APPLICATION_ID}/${interaction.token}/messages/${interaction.message?.id}`;
