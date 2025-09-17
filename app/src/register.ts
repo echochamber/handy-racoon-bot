@@ -1,22 +1,7 @@
 import { RESTPostAPIApplicationCommandsJSONBody } from 'discord-api-types/v10';
-import { addItem } from './commands/magicItem/createItem.js';
-import { attuneItem } from './commands/magicItem/attuneItem.js';
-import { characterRoot } from './commands/character/characterRoot.js';
-import { listAttunements } from './commands/character/listAttunements.js';
-import { listMagicItems } from './commands/character/listMagicItems.js';
-import { transferItem } from './commands/magicItem/transferItem.js';
-import { unattuneItem } from './commands/magicItem/unattuneItem.js';
 import { config } from './config.js';
-import { TEST_COMMAND } from './demo/testCommand.js';
 import { executeDiscordRequest } from './discord/discordAPI.js';
-import { magicItemRoot } from './commands/magicItem/magicItemRoot.js';
-
-const ALL_COMMANDS = [
-  TEST_COMMAND,
-  magicItemRoot.command,
-  characterRoot.command,
-];
-console.log(ALL_COMMANDS);
+import { ALL_COMMANDS } from './commands/commands.js';
 
 export async function InstallGlobalCommands(appId: string, commands: RESTPostAPIApplicationCommandsJSONBody[]) {
   // API endpoint to overwrite global commands
@@ -30,5 +15,5 @@ export async function InstallGlobalCommands(appId: string, commands: RESTPostAPI
     console.error(err);
   }
 }
-
+console.log(ALL_COMMANDS);
 InstallGlobalCommands(config.APPLICATION_ID, ALL_COMMANDS);

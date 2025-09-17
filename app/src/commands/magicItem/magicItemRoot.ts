@@ -63,6 +63,9 @@ export function handleInitiate(req: Request, res: Response) {
 }
 
 export const magicItemRoot = {
-  command: MAGIC_ITEM_COMMAND,
+  command: {
+    cmd: MAGIC_ITEM_COMMAND,
+    initiator: handleInitiate,
+  },
   initiate: handleInitiate,
 }

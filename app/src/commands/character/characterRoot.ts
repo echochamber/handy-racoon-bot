@@ -6,6 +6,7 @@ import { updateCharacterDescription } from "./updateCharacterDescription.js";
 import { listAttunements } from "./listAttunements.js";
 import { listMagicItems } from "./listMagicItems.js";
 import { showCharacter } from "./showCharacter.js";
+import { CommandGroupHandler as CommandGroupHandler } from "../commands.js";
 
 export const CHARACTER_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {
   name: 'character',
@@ -72,7 +73,7 @@ export function handleInitiate(req: Request, res: Response) {
 
 
 
-export const characterRoot = {
+export const characterRoot: CommandGroupHandler = {
   command: CHARACTER_COMMAND,
   initiate: handleInitiate,
 }

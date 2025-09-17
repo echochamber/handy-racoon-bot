@@ -14,9 +14,10 @@ const COLLECTION = "oauthTokens";
 /**
  * Stores an OAuth token for a Discord user.
  */
-export async function saveToken(discordId: string, token: OAuthToken): Promise<void> {
-  const ref = db.collection(COLLECTION).doc(discordId);
-  await ref.set(token);
+export async function saveToken(discordId: string, token: OAuthToken): Promise<OAuthToken> {
+  const col = db.collection(COLLECTION).doc(discordId);
+  await col.set(token);
+  return token;
 }
 
 /**

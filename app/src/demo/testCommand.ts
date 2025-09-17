@@ -7,6 +7,7 @@ import { Request, Response } from 'express';
 
 import { ComponentType, InteractionResponseType, RESTPostAPIApplicationCommandsJSONBody } from "discord-api-types/v10";
 import { getRandomEmoji } from "../util/misc.js";
+import { CommandGroupHandler as CommandGroupHandler } from "@/commands/commands.js";
 
 // Simple test command
 export const TEST_COMMAND: RESTPostAPIApplicationCommandsJSONBody = {
@@ -33,4 +34,11 @@ export function handleTest(req: Request, res: Response) {
       ],
     },
   });
+}
+
+
+
+export const testCommandExp: CommandGroupHandler = {
+  command: TEST_COMMAND,
+  initiate: handleTest,
 }

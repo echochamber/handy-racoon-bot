@@ -24,9 +24,17 @@ export interface AppConfig {
   FIREBASE_APP: string,
   OAUTH_CLIENT_ID: string,
   OAUTH_CLIENT_SECRET: string,
-  OAUTH_REDIRECT_URI: string
+  OAUTH_REDIRECT_URI: string,
+  FRANK_BOT_WEBHOOK_TOKEN: string,
+  FRANK_BOT_WEBHOOK_CHANNEL: string,
 }
 
+// ENV variables pulled from secret manager are all stored in one ENV_VAR that
+// we then parse as if it was a whole dotenv file and merge with the rest of the
+// system env vars we pull
+const { SECRET_ENV: secretEnv = "" } = process.env;
+const processEnv = process.env;
+const mergedEnv = { ...dotenv.parse(secretEnv), ...processEnv };
 const {
   PUBLIC_KEY,
   APPLICATION_ID,
@@ -39,14 +47,15 @@ const {
   GCP_PROJECT = "",
   GCLOUD_PROJECT = "",
   FIREBASE_DB = 'handy-racoon',
-  PORT = "3000"
-} = process.env
-
+  PORT = "3000",
+  FRANK_BOT_WEBHOOK_TOKEN = "",
+  FRANK_BOT_WEBHOOK_CHANNEL = ""
+} = mergedEnv;
 
 var errors: string[] = []
 const REQUIRED = ['PUBLIC_KEY', 'APPLICATION_ID', 'BOT_TOKEN', 'PORT', 'RUNTIME_ENV', 'FIREBASE_DB', 'GCP_PROJECT', 'FIREBASE_APP']
 REQUIRED.forEach((key) => {
-  if (!process.env[key]) {
+  if (!mergedEnv[key]) {
     errors.push(key);
   }
 });
@@ -64,5 +73,7 @@ export const config: AppConfig = {
   FIREBASE_APP: FIREBASE_APP!,
   OAUTH_CLIENT_ID: OAUTH_CLIENT_ID!,
   OAUTH_CLIENT_SECRET: OAUTH_CLIENT_SECRET!,
-  OAUTH_REDIRECT_URI: OAUTH_REDIRECT_URI!
+  OAUTH_REDIRECT_URI: OAUTH_REDIRECT_URI!,
+  FRANK_BOT_WEBHOOK_TOKEN: !FRANK_BOT_WEBHOOK_TOKEN,
+  FRANK_BOT_WEBHOOK_CHANNEL: !FRANK_BOT_WEBHOOK_CHANNEL
 };

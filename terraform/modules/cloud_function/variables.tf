@@ -43,7 +43,7 @@ variable "source_dir" {
 }
 variable "source_excludes" {
   type        = list(string)
-  default     = ["dist/*"]
+  default     = ["dist/*", ".env*"]
   description = "Pattern of files in source dir to exclude"
 }
 
@@ -69,4 +69,15 @@ variable "make_public" {
   type        = bool
   default     = true
   description = "Whether the function should be publicly invokable"
+}
+
+variable "dotenv_secret_name" {
+  type        = string
+  nullable    = true
+  description = "GCP Cloud secret containing dotenv file. Must either provide this or dotenv_file_local_path."
+}
+
+variable "gcp_function_sa_email" {
+  type        = string
+  description = "Service account that runs the cloud function."
 }

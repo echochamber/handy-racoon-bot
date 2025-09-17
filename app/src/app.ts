@@ -18,28 +18,24 @@ import { getRandomEmoji } from './util/misc.js';
 import { updateCharacterDescription } from './commands/character/updateCharacterDescription.js';
 import { showCharacter } from './commands/character/showCharacter.js';
 import oauthCallback from './auth/oauthHandler.js';
+import { ALL_COMMANDS_MAP } from './commands/commands.js';
 
 function logAndSendError(res: Response, msg: string) {
   res.status(400).json({ error: msg });
   console.error(msg)
   throw new Error(msg);
 }
-
 function handleApplicationCommand(req: any, res: any) {
   const { data } = req.body;
   const { name } = data;
 
-  switch (name) {
-    case 'test':
-      console.log(`Test time: ${name}`);
-      return handleTest(req, res);
-    case characterRoot.command.name:
-      return characterRoot.initiate(req, res);
-    case magicItemRoot.command.name:
-      return magicItemRoot.initiate(req, res);
-    default:
-      logAndSendError(res, `Unknown command: ${name}`)
+  for (const key in ALL_COMMANDS_MAP) {
+    const commandGroupHandler = ALL_COMMANDS_MAP[key];
+    if (commandGroupHandler.command.name === name) {
+      return commandGroupHandler.initiate(req, res);
+    }
   }
+  logAndSendError(res, `Unknown command: ${name}`)
 }
 
 function handleModalSubmit(req: any, res: any) {

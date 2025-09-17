@@ -1,8 +1,12 @@
-terraform { 
+terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
       version = ">= 4.34.0"
+    }
+    dotenv = {
+      source  = "jrhouston/dotenv"
+      version = "~> 1.0"
     }
   }
 }
@@ -12,9 +16,6 @@ provider "google" {
   region  = var.region
 }
 
-resource "random_id" "default" {
-  byte_length = 8
-}
 
 locals {
   services = [
@@ -28,6 +29,7 @@ locals {
     "secretmanager.googleapis.com",
     "storage-component.googleapis.com",
   ]
+  tmp_zip_path = "/tmp/${var.name}-source.zip"
 }
 
 resource "google_project_service" "enabled" {
@@ -38,85 +40,25 @@ resource "google_project_service" "enabled" {
   disable_on_destroy         = false
 }
 
-data "google_secret_manager_secret_version" "env_file" {
-  secret  = var.env_secret_name
+
+# Pull env file from GCP Secret Manager
+data "google_secret_manager_secret" "secret_env" {
+  secret_id  = var.dotenv_secret_name
   project = var.project_id
-  version = "latest"
-}
-
-resource "google_storage_bucket_object" "env_file" {
-  name   = "${var.name}-env"
-  bucket = var.bucket_name
-  source = data.google_secret_manager_secret_version.env_file.secret_data
-  content_type = "text/plain"
-}
-
-
-
-resource "null_resource" "copy_env_file" {
-  triggers = {
-    env_sha = data.google_secret_manager_secret_version.env_file.secret_data_sha256
-    src_dir = var.source_dir
-  }
-
-  provisioner "local-exec" {
-    command = <<EOT
-set -e
-# Create a temp dir
-TMP_DIR=$(mktemp -d /tmp/cloudfuncbuild-XXXXXXXX)
-# Copy source dir to temp dir
-cp -a "${var.source_dir}/." "$TMP_DIR/"
-# Write .env file into temp dir
-echo "${data.google_secret_manager_secret_version.env_file.secret_data}" > "$TMP_DIR/.env"
-# Output the temp dir path for use by archive_file
-echo "$TMP_DIR" > "${var.source_dir}/.last_tmp_dir"
-EOT
-  }
 }
 
 data "archive_file" "function" {
   type        = "zip"
-  output_path = "/tmp/${var.name}-source.zip"
-  # Read the temp dir path from the file created by the provisioner
-  source_dir  = chomp(file("${var.source_dir}/.last_tmp_dir"))
+  output_path = local.tmp_zip_path
+  source_dir = var.source_dir
   excludes    = var.source_excludes
-
-  # Copy the env file from Secret Manager into .env at the root of the temp dir before zipping
-  depends_on = [null_resource.copy_env_file, google_storage_bucket_object.env_file]
 }
 
 
-# TODO: Local fire cleanup can be better probably.
 resource "google_storage_bucket_object" "function" {
   name   = "${var.name}-${data.archive_file.function.output_md5}.zip"
   bucket = var.bucket_name
   source = data.archive_file.function.output_path
-  provisioner "local-exec" {
-    when    = create
-    command = <<EOT
-TMP_DIR_FILE="${var.source_dir}/.last_tmp_dir"
-if [ -f "$TMP_DIR_FILE" ]; then
-  TMP_DIR=$(cat "$TMP_DIR_FILE")
-  if [ -d "$TMP_DIR" ]; then
-    rm -rf "$TMP_DIR"
-  fi
-  rm -f "$TMP_DIR_FILE"
-fi
-EOT
-  }
-  provisioner "local-exec" {
-    when    = destroy
-    command = <<EOT
-TMP_DIR_FILE="${var.source_dir}/.last_tmp_dir"
-if [ -f "$TMP_DIR_FILE" ]; then
-  TMP_DIR=$(cat "$TMP_DIR_FILE")
-  if [ -d "$TMP_DIR" ]; then
-    rm -rf "$TMP_DIR"
-  fi
-  rm -f "$TMP_DIR_FILE"
-fi
-EOT
-  }
 }
 
 resource "google_cloudfunctions2_function" "function" {
@@ -132,8 +74,8 @@ resource "google_cloudfunctions2_function" "function" {
     entry_point = var.entry_point
     source {
       storage_source {
-        bucket = var.bucket_name
-        object = google_storage_bucket_object.function.name
+        bucket     = var.bucket_name
+        object     = google_storage_bucket_object.function.name
         generation = google_storage_bucket_object.function.generation
       }
     }
@@ -143,6 +85,13 @@ resource "google_cloudfunctions2_function" "function" {
     max_instance_count = var.max_instances
     available_memory   = var.memory
     timeout_seconds    = var.timeout
+    service_account_email = var.gcp_function_sa_email
+    secret_environment_variables {
+      key = "SECRET_ENV"
+      project_id = var.project_id
+      secret = data.google_secret_manager_secret.secret_env.secret_id
+      version = "latest"
+    }
   }
 }
 

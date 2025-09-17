@@ -3,7 +3,7 @@ import { executeDiscordRequest } from "@/discord/discordAPI.js";
 import { Character } from "@/storage/entities/character.js";
 import { FirebaseEntity } from "@/storage/entities/docBase.js";
 import { MagicItem } from "@/storage/entities/magicItem.js";
-import { APIInteraction, ComponentType, InteractionResponseType, MessageFlags } from "discord-api-types/v10";
+import { APIBaseMessageNoChannel, APIEmbed, APIInteraction, ComponentType, EmbedType, ImageSize, InteractionResponseType, MessageFlags } from "discord-api-types/v10";
 import { Response } from "express";
 import { E } from "node_modules/@faker-js/faker/dist/airline-CHFQMWko.js";
 
@@ -143,4 +143,21 @@ function entityToOptions<T extends FirebaseEntity>(
       default: defaultId !== undefined && defaultId === c.meta?.id,
     }))
     .filter(option => option.label !== undefined && option.value !== undefined);
+}
+
+export function embedGif(title: string, url: string): APIEmbed {
+
+  return {
+        "title": title,
+        "type": EmbedType.Image,
+        "image": {
+            "url": url
+        } 
+    }
+}
+
+export async function frankBotWebHook(body: Partial<APIBaseMessageNoChannel>): Promise<globalThis.Response> {
+
+  const endpoint = `https://discord.com/api/webhooks/${config.FRANK_BOT_WEBHOOK_CHANNEL}/${config.FRANK_BOT_WEBHOOK_TOKEN}`
+  return executeDiscordRequest(endpoint, { method: 'POST', body: body });
 }
