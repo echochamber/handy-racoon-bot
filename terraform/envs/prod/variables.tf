@@ -25,7 +25,7 @@ variable "gcp_function_sa" {
 variable "function_source_dir" {
   description = "Path to the function source directory"
   type        = string
-  default     = "../../../app/"
+  default     = "../../../server/"
 }
 
 variable "function_source_excludes" {

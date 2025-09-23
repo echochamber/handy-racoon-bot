@@ -4,10 +4,6 @@ terraform {
       source  = "hashicorp/google"
       version = ">= 4.34.0"
     }
-    dotenv = {
-      source  = "jrhouston/dotenv"
-      version = "~> 1.0"
-    }
   }
 }
 
@@ -87,7 +83,7 @@ resource "google_cloudfunctions2_function" "function" {
     timeout_seconds    = var.timeout
     service_account_email = var.gcp_function_sa_email
     secret_environment_variables {
-      key = "SECRET_ENV"
+      key = "SECRET_ENV" # Env variable to bind file contents to.
       project_id = var.project_id
       secret = data.google_secret_manager_secret.secret_env.secret_id
       version = "latest"
